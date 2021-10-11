@@ -44,12 +44,21 @@ bow_model_dir = "bow_models"
 # in-memory feature data
 features = {}
 
+
+# helper function TODO find a better place for it
+def remove_suffix(line: str, suffix: str) -> str:
+    if line.endswith(suffix):
+        return line[:-len(suffix):]
+    else:
+        return line
+
+
 # Inference session object for predictions.
 inf_sessions = {}
 # Store all model objects and inference session objects in memory for
 # quick access.
 for model_file in os.listdir(onnx_model_dir):
-    model_id = model_file.rstrip(".onnx")
+    model_id = remove_suffix(model_file, ".onnx")
     if model_id not in inf_sessions:
         inf_sessions[model_id] = rt.InferenceSession(
             os.path.join(onnx_model_dir, model_file)
@@ -62,7 +71,7 @@ for bow_file in os.listdir(bow_model_dir):
     # Ignore hidden files like .keep
     if bow_file.startswith("."):
         continue
-    model_id = bow_file.rstrip(".json")
+    model_id = remove_suffix(bow_file, ".json")
     if model_id not in bow_models:
         bow_path = os.path.join(bow_model_dir, bow_file)
         with open(bow_path) as bowf:
@@ -147,7 +156,7 @@ def trainFromAnswers(req: LanguageDataRequest):
         end = time.time()
 
         metrics = classification_report(
-            y_test, y_pred, output_dict=True, target_names=["False", "True"]
+            y_test, y_pred, output_dict=True, target_names=["False", "True"] # TODO allow more categories
         )
 
         accuracy = accuracy_score(y_test, y_pred)
@@ -244,15 +253,14 @@ def store_as_onnx(model, model_id, model_columns, num_features):
 @app.post("/predictFromAnswers", response_model=PredictFromLanguageDataResponse)
 def predictFromAnswers(req: LanguageDataRequest):
     model_id = req.modelId
-
-    if model_id not in [model.rstrip(".onnx") for model in os.listdir(onnx_model_dir)]:
+    if model_id not in [remove_suffix(model, ".onnx") for model in os.listdir(onnx_model_dir)]:
         raise HTTPException(
             status_code=422,
             detail='Model with model ID "{}" could not be'
             " found in the ONNX model directory."
             " Please train first.".format(model_id),
         )
-    if model_id not in [model.rstrip(".json") for model in os.listdir(bow_model_dir)]:
+    if model_id not in [remove_suffix(model, ".json") for model in os.listdir(bow_model_dir)]:
         raise HTTPException(
             status_code=422,
             detail='BOW Model with model ID "{}" could not be'
