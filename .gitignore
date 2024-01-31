@@ -11,3 +11,10 @@ data/xmi/
 .pycache
 */.pycache
 scribbles
+
+bow_models/*.json
+!bow-models/test_pred_data.json
+onnx_models/*.onnx
+!onnx_models/default.onnx
+!onnx_models/test_pred_data.onnx
+model_metrics/*.json
