@@ -51,7 +51,7 @@ pip install uvicorn
 
 The service can be run with the following command:
 ```
-uvicorn main:app --port 9999 --reload
+uvicorn main:app --port 9999 --reload --app-dir src
 ```
 The ```--port``` number can be set to any free port of the developer's choice.  
 For development purposes it is convenient to make use of the ```--reload``` 
