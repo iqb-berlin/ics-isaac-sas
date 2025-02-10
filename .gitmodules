@@ -1,5 +1,5 @@
 [submodule "features"]
-	path = features
+	path = src/features
 	url = https://github.com/ramonziai/isaac-feature-extraction.git
 [submodule "coding-service"]
 	path = specs/coding-service
