@@ -1,6 +1,10 @@
 import json
 import os
 import shutil
+from pathlib import Path
+
+from builtins import str, len, list, max, Exception, print, int, float, zip, dict, open
+
 import time
 import numpy as np
 import onnxruntime as rt
@@ -38,8 +42,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-onnx_model_dir = "onnx_models"
-bow_model_dir = "bow_models"
+mod_path = Path(__file__).parent
+
+onnx_model_dir = (mod_path / "../data/onnx_models").resolve().as_posix()
+bow_model_dir = (mod_path / "../data/bow_models").resolve().as_posix()
 
 # in-memory feature data
 features = {}
@@ -76,7 +82,7 @@ for bow_file in os.listdir(bow_model_dir):
         bow_path = os.path.join(bow_model_dir, bow_file)
         with open(bow_path) as bowf:
             state_dict = json.load(bowf)
-            # Instances list is passed empty here because bag of words setup has 
+            # Instances list is passed empty here because bag of words setup has
             # already been done.
             bow_models[model_id] = BOWGroupExtractor([])
             bow_models[model_id].bag = state_dict["bag"]
@@ -116,7 +122,7 @@ def trainFromAnswers(req: LanguageDataRequest):
     ft_extractors = [SIMGroupExtractor()]
 
     df = pd.DataFrame()
-    
+
     # Note that the BOW feature extractor is set up later because it needs a new
     # setup for every new train-test split.
     for ft_extractor in ft_extractors:
@@ -187,7 +193,7 @@ def trainFromAnswers(req: LanguageDataRequest):
 
         best_list["train_time"] = end - start
 
-        # TODO: How to determine which model should be stored 
+        # TODO: How to determine which model should be stored
         # (accuracy, f1, cohens kappa)?
         if not best_model or accuracy > best_acc["value"]:
             best_model = clf
@@ -274,7 +280,7 @@ def predictFromAnswers(req: LanguageDataRequest):
 
     predictions = []
 
-    for instance in req.instances:        
+    for instance in req.instances:
         data = pd.DataFrame()
         for ft_extractor in ft_extractors:
             data = pd.concat([data, ft_extractor.extract([instance])], axis=1)
