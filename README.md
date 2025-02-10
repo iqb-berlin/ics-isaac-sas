@@ -30,6 +30,12 @@ docker run --name isaac-sas -p 80:80 ramonziai/isaac-ml-service
 
 ## Manual/development setup
 
+```
+python3 -m venv venv
+source venv/bin/activate
+```
+
+
 ### Installing dependencies
 
 ```

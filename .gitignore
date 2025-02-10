@@ -11,6 +11,7 @@ data/xmi/
 .pycache
 */.pycache
 scribbles
+/venv
 
 bow_models/*.json
 !bow-models/test_pred_data.json
