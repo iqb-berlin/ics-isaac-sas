@@ -19,3 +19,4 @@ data/onnx_models/*.onnx
 !data/onnx_models/default.onnx
 !data/onnx_models/test_pred_data.onnx
 data/model_metrics/*.json
+gen
