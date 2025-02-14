@@ -1,11 +1,11 @@
 ### fetch IDs of currently stored SAS models
-GET http://localhost:9999/fetchStoredModels
+GET {{server}}/fetchStoredModels
 
 ### train a new model based on submitted answer data
-POST http://localhost:9999/trainFromAnswers
+POST {{server}}/trainFromAnswers
 
 ### predict score of submitted answers
-POST http://localhost:9999/predictFromAnswers
+POST {{server}}/predictFromAnswers
 
 ### remove all models from service
-GET http://localhost:9999/wipe\_models
+GET {{server}}/wipe\_models
