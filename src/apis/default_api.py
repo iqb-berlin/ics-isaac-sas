@@ -16,6 +16,7 @@ from fastapi import (  # noqa: F401
     status,
 )
 
+import controller.info
 from models.extra_models import TokenModel  # noqa: F401
 from models.response import Response
 from models.service_info import ServiceInfo
@@ -38,7 +39,7 @@ router = APIRouter()
 )
 async def info_get(
 ) -> ServiceInfo:
-    return "yes"
+    return controller.info.get_info()
 
 
 @router.get(
