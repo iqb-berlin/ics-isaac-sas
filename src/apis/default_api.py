@@ -16,7 +16,7 @@ from fastapi import (  # noqa: F401
     status,
 )
 
-import controller.info
+from controller import info, tasks
 from models.extra_models import TokenModel  # noqa: F401
 from models.response import Response
 from models.service_info import ServiceInfo
@@ -39,7 +39,7 @@ router = APIRouter()
 )
 async def info_get(
 ) -> ServiceInfo:
-    return controller.info.get_info()
+    return info.get_info()
 
 
 @router.get(
@@ -53,7 +53,7 @@ async def info_get(
 )
 async def tasks_get(
 ) -> List[Task]:
-    ...
+    return tasks.list_tasks()
 
 
 @router.put(
@@ -68,7 +68,7 @@ async def tasks_get(
 async def tasks_put(
     tasks_put_request: TasksPutRequest = Body(None, description=""),
 ) -> Task:
-    ...
+    return tasks.create(tasks_put_request)
 
 
 @router.delete(
@@ -145,7 +145,7 @@ async def tasks_task_id_delete(
 async def tasks_task_id_get(
     task_id: str = Path(..., description=""),
 ) -> Task:
-    ...
+    return tasks.get(task_id)
 
 
 @router.patch(
@@ -176,4 +176,4 @@ async def tasks_task_id_patch(
     task_id: str = Path(..., description=""),
     tasks_task_id_patch_request: TasksTaskIdPatchRequest = Body(None, description=""),
 ) -> Task:
-    ...
+    return tasks.action(task_id, tasks_task_id_patch_request.action)

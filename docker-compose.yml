@@ -1,0 +1,10 @@
+services:
+  iscs-redis:
+    container_name: iscs-redis
+    image: ${DOCKERHUB_PROXY}redis:7.4-bookworm
+    command:
+      - "bash"
+      - "-c"
+      - "redis-server --maxmemory ${CACHE_SERVICE_RAM-1073741824} --maxmemory-policy volatile-lru"
+    ports:
+      - "6379:6379"
