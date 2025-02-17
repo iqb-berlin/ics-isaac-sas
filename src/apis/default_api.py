@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from typing import Dict, List  # noqa: F401
+from typing import Dict, List, Any  # noqa: F401
 
 from fastapi import (  # noqa: F401
     APIRouter,
@@ -16,6 +16,7 @@ from fastapi import (  # noqa: F401
     status,
 )
 
+import controller.tasks
 from controller import info, tasks
 from models.extra_models import TokenModel  # noqa: F401
 from models.response import Response
@@ -84,7 +85,7 @@ async def tasks_task_id_data_chunk_id_delete(
     task_id: str = Path(..., description=""),
     chunk_id: str = Path(..., description=""),
 ) -> None:
-    ...
+    return controller.tasks.delete_data(task_id, chunk_id)
 
 
 @router.get(
@@ -99,8 +100,8 @@ async def tasks_task_id_data_chunk_id_delete(
 async def tasks_task_id_data_chunk_id_get(
     task_id: str = Path(..., description=""),
     chunk_id: str = Path(..., description=""),
-) -> List[Response]:
-    ...
+):
+    return controller.tasks.get_data(task_id, chunk_id)
 
 
 @router.put(
@@ -116,7 +117,7 @@ async def tasks_task_id_data_put(
     task_id: str = Path(..., description=""),
     response: List[Response] = Body(None, description=""),
 ) -> TasksTaskIdDataPut200Response:
-    ...
+    return tasks.add_data(task_id, response)
 
 
 @router.delete(
@@ -130,7 +131,7 @@ async def tasks_task_id_data_put(
 async def tasks_task_id_delete(
     task_id: str = Path(..., description=""),
 ) -> None:
-    ...
+    return tasks.delete(task_id)
 
 
 @router.get(
@@ -159,8 +160,9 @@ async def tasks_task_id_get(
 )
 async def tasks_task_id_instructions_patch(
     task_id: str = Path(..., description=""),
+    instructions: Dict[str, Any] = Body(None, description=""),
 ) -> None:
-    ...
+    return tasks.update_instructions(task_id, instructions)
 
 
 @router.patch(

@@ -15,6 +15,8 @@ services:
     volumes:
       - ./src:/iscs
     command: rq worker -u redis://iscs-redis:6379 default
+    environment:
+      REDIS_HOST: iscs-redis
     deploy:
       replicas: 3
     depends_on:
