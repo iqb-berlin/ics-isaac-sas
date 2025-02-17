@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from pydantic import StrictStr, StrictInt
 from rq import Queue
 from redis import Redis
-from rq.job import Job, JobStatus
+from rq.job import Job, JobStatus, Callback
 from typing_extensions import List, Dict
 
 from models.chunk_type import ChunkType
@@ -26,13 +26,21 @@ tasks: Dict[str, Task] = {}
 def list_tasks() -> List[Task]:
     return list(tasks.values())
 
-def long_task(data: List[DataChunk]) -> List[DataChunk]:
-    sleep(30)
+def long_task(data: List[DataChunk]):
+    sleep(3)
     data.append(DataChunk(id = StrictStr("output"), type = ChunkType("output")))
     return data
 
-def job_done(args):
+def job_done(job, connection, result, *args, **kwargs):
+    task = tasks.get(job.id)
+    task.events.append(TaskEventsInner(
+        status='finish',
+        message='yehaa'
+    ))
     print('yeahh', args)
+    print('yeahh', job)
+    print('yeahh', kwargs)
+    print('yeahh', job.data)
 
 def job_failed(args):
     print('Arrrgh', args)
@@ -42,12 +50,13 @@ def action(taskId: str, action: TaskAction) -> Task:
     if action == "commit":
         input_data = [chunk for chunk in task.data if chunk.type == "input"]
         job = Job.create(
-            id = taskId,
             func = long_task,
+            id = taskId,
             connection = redis_conn,
             kwargs = { "data": input_data },
-            on_success = job_done,
-            on_failure = job_failed
+            on_success = Callback(job_done),
+            # on_failure = Callback(job_failed),
+            timeout = 5
         )
         queue.enqueue_job(job)
         task.events.append(TaskEventsInner(

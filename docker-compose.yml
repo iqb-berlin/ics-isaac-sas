@@ -8,3 +8,23 @@ services:
       - "redis-server --maxmemory ${CACHE_SERVICE_RAM-1073741824} --maxmemory-policy volatile-lru"
     ports:
       - "6379:6379"
+
+  iscs-worker:
+    build:
+      dockerfile: worker.Dockerfile
+    volumes:
+      - ./src:/iscs
+    command: rq worker -u redis://iscs-redis:6379 default
+    deploy:
+      replicas: 3
+    depends_on:
+      - iscs-redis
+
+  iscs-rq-dashboard:
+    build:
+      dockerfile: worker.Dockerfile
+    command: rq-dashboard --redis-url=redis://iscs-redis:6379
+    ports:
+      - 9181:9181
+#    profiles:
+#      - dev
