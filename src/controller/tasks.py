@@ -130,9 +130,12 @@ def add_data(task_id: str, data: List[Response]) -> TasksTaskIdDataPut200Respons
     store(task)
     return TasksTaskIdDataPut200Response(id = chunk)
 
-def store_data(type: ChunkType, data: List[Response]) -> DataChunk:
+def store_data(chunkType: ChunkType, data: List[Response]) -> DataChunk:
+    for item in data:
+        print(type(item))
+        print(item)
     chunk = DataChunk(
-        type = type,
+        type = chunkType,
         id = StrictStr(uuid.uuid4()),
     )
     data_as_json = json.dumps([row.to_dict() for row in data])
