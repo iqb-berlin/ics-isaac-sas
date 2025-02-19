@@ -30,10 +30,10 @@ bow_models = {}
 onnx_model_dir = ''
 bow_model_dir = ''
 
-def prepare(mod_path: str) -> None:
+def prepare(root_path: str) -> None:
 
-    onnx_model_dir = (mod_path / "../data/onnx_models").resolve().as_posix()
-    bow_model_dir = (mod_path / "../data/bow_models").resolve().as_posix()
+    onnx_model_dir = (root_path / "../data/onnx_models").resolve().as_posix()
+    bow_model_dir = (root_path / "../data/bow_models").resolve().as_posix()
 
 
     # Store all model objects and inference session objects in memory for

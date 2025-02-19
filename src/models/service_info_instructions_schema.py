@@ -32,20 +32,22 @@ class ServiceInfoInstructionsSchema(BaseModel):
     ServiceInfoInstructionsSchema
     """ # noqa: E501
     id: StrictStr = Field(alias="$id")
-    schema: StrictStr = Field(alias="$schema")
+    xschema: StrictStr = Field(alias="$schema")
     __properties: ClassVar[List[str]] = ["$id", "$schema"]
 
-    @field_validator('schema')
+    @field_validator('xschema')
     def _schema_validate_enum(cls, value):
         """Validates the enum"""
-        if value not in ('https://json-schema.org/draft/2020-12/schema', 'https://json-schema.org/draft/2019-09/schema', 'https://json-schema.org/draft-07/schema'):
-            raise ValueError("must be one of enum values ('https://json-schema.org/draft/2020-12/schema', 'https://json-schema.org/draft/2019-09/schema', 'https://json-schema.org/draft-07/schema')")
+        if value not in ('http://json-schema.org/draft/2020-12/schema#', 'http://json-schema.org/draft/2019-09/schema#', 'http://json-schema.org/draft-07/schema#'):
+            print(value)
+            raise ValueError("must be one of enum values ('http://json-schema.org/draft/2020-12/schema#', 'http://json-schema.org/draft/2019-09/schema#', 'http://json-schema.org/draft-07/schema#')")
         return value
 
     model_config = {
         "populate_by_name": True,
         "validate_assignment": True,
         "protected_namespaces": (),
+        "extra": 'allow'
     }
 
 
