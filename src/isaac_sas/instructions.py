@@ -9,7 +9,6 @@ def get_schema() -> ServiceInfoInstructionsSchema:
     onnx_models_enum = Enum('AvailableModels', {value: value for value in onnx_models["modelIds"]})
     dynamic_model = create_model(
         'ISCSInstructionsSchema',
-        bar = (int, 123),
         model = (onnx_models_enum, ...)
     )
     json_schema = dynamic_model.model_json_schema()

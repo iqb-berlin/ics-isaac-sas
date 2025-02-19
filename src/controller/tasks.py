@@ -27,9 +27,11 @@ queue = Queue(connection=redis_queue)
 print("Redis Connected")
 
 def list_tasks() -> List[Task]:
-    tasks = [get for value in redis_store.keys('task:*')]
-    print(tasks)
-    return list()
+    them = redis_store.keys('task:*')
+    tasks = []
+    for one in them:
+        tasks.append(Task.from_json(redis_store.get(one)))
+    return list(tasks)
 
 def run_task(task: Task) -> None:
     task.events.append(TaskEventsInner(

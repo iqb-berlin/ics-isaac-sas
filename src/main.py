@@ -13,14 +13,14 @@ isaac_sas.core.prepare(mod_path)
 
 app = FastAPI()
 
-# TODO: The allow_origins=['*'] variable should probably changed and contain a
-#       specified number of origins.
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 app.include_router(DefaultApiRouter)
