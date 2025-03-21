@@ -21,7 +21,7 @@ import json
 
 
 from pydantic import BaseModel, ConfigDict
-from typing import Any, ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Optional
 from models.task_type import TaskType
 try:
     from typing import Self
@@ -33,7 +33,7 @@ class TasksPutRequest(BaseModel):
     TasksPutRequest
     """ # noqa: E501
     type: TaskType
-    instructions: Dict[str, Any]
+    instructions: Optional[Dict[str, Any]] = None
     __properties: ClassVar[List[str]] = ["type", "instructions"]
 
     model_config = {

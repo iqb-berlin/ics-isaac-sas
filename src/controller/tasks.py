@@ -105,7 +105,7 @@ def create(create_task: TasksPutRequest) -> Task:
             )
         ],
         data = list(),
-        instructions = create_task.instructions
+        instructions = create_task.instructions or {}
     )
     store(task)
     return task
