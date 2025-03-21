@@ -15,6 +15,8 @@ from fastapi import (  # noqa: F401
     Security,
     status,
 )
+from pydantic import ValidationError
+from fastapi.exceptions import RequestValidationError
 
 import controller.tasks
 from controller import info, tasks
@@ -95,7 +97,7 @@ async def tasks_task_id_data_chunk_id_delete(
     },
     tags=["default"],
     summary="retrieve a chunk of data from a specific task",
-    response_model_by_alias=True,
+    response_model_by_alias = True,
 )
 async def tasks_task_id_data_chunk_id_get(
     task_id: str = Path(..., description=""),
@@ -121,7 +123,13 @@ async def tasks_task_id_data_put(
     validated_responses: List[Response] = []
     for row in response:
         print(row)
-        validated_responses.append(Response.from_dict(row))
+        try:
+            response = Response.from_dict(row)
+        except ValidationError as e:
+            print(e.errors())
+            raise RequestValidationError(errors = e.errors())
+
+        validated_responses.append(response)
     return tasks.add_data(task_id, validated_responses)
 
 

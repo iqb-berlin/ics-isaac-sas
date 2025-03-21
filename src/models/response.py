@@ -36,7 +36,7 @@ class Response(BaseModel):
     set_id: StrictStr = Field(description="Identifier of the set. Typically a user-id.", alias="setId")
     id: Annotated[str, Field(strict=True)] = Field(description="Identifier for the data source (variable)")
     status: StrictStr = Field(description="Status as stage in the workflow of creating and coding a variable's value")
-    value: ResponseValue
+    value: Optional[ResponseValue]
     subform: Optional[StrictStr] = Field(default=None, description="If variables i. e. data source ids are not unique in the unit, 'subform' can specify the sub object related to the specific variable.")
     code: Optional[StrictInt] = Field(default=None, description="Code representing the category of the value after coding process.")
     score: Optional[StrictInt] = Field(default=None, description="This value represents the result evaluation of the code after coding process.")
@@ -59,7 +59,7 @@ class Response(BaseModel):
     model_config = {
         "populate_by_name": True,
         "validate_assignment": True,
-        "protected_namespaces": (),
+        "protected_namespaces": ()
     }
 
 
