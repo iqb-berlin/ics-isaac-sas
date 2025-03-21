@@ -12,7 +12,6 @@ def get_schema() -> ServiceInfoInstructionsSchema:
         model = (onnx_models_enum, ...)
     )
     json_schema = dynamic_model.model_json_schema()
-    print('c')
     json_schema['$id'] = 'iscs-instructions-schema'
     json_schema['$schema'] = "http://json-schema.org/draft-07/schema#"
     return json_schema

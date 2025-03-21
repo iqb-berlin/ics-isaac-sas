@@ -1,13 +1,15 @@
 services:
   iscs-redis:
     container_name: iscs-redis
-    image: ${DOCKERHUB_PROXY}redis:7.4-bookworm
+    image: redis:7.4-bookworm
     command:
       - "bash"
       - "-c"
-      - "redis-server --maxmemory ${CACHE_SERVICE_RAM-1073741824} --maxmemory-policy volatile-lru"
+      - "redis-server --maxmemory 1073741824 --maxmemory-policy volatile-lru"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
     ports:
-      - "6379:6379"
+      - 6379:6379
 
   iscs-worker:
     build:
@@ -21,6 +23,21 @@ services:
       replicas: 3
     depends_on:
       - iscs-redis
+
+  iscs-backend:
+    build:
+      dockerfile: backend.Dockerfile
+    volumes:
+      - ./src:/app
+      - ./data:/data
+    command: uvicorn main:app --port 9999 --reload --app-dir src --host 0.0.0.0
+    environment:
+      REDIS_HOST: iscs-redis
+    ports:
+      - 9999:9999
+    depends_on:
+      - iscs-redis
+
 
   iscs-rq-dashboard:
     build:

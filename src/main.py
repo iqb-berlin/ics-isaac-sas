@@ -9,11 +9,19 @@ from apis.default_api import router as DefaultApiRouter
 from apis.native_api import router as NativeApiRouter
 from pathlib import Path
 
+def connect_debugger():
+    try:
+        import pydevd_pycharm
+        pydevd_pycharm.settrace('172.17.0.1', port=9898, stdoutToServer=True, stderrToServer=True)
+    except Exception:
+        print('no debugger')
+
+connect_debugger()
+
 mod_path = Path(__file__).parent
 isaac_sas.core.prepare(mod_path)
 
 app = FastAPI()
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,6 +34,11 @@ app.add_middleware(
 
 app.include_router(DefaultApiRouter)
 app.include_router(NativeApiRouter)
+
+@app.middleware("http")
+async def connect_debugger_mw(request: Request, call_next):
+    connect_debugger()
+    return await call_next(request)
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -40,5 +53,3 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "message": error_text
         }
     )
-
-
