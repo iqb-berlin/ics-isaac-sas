@@ -14,7 +14,7 @@ def connect_debugger():
         import pydevd_pycharm
         pydevd_pycharm.settrace('172.17.0.1', port=9898, stdoutToServer=True, stderrToServer=True)
     except Exception:
-        print('no debugger')
+        pass
 
 connect_debugger()
 
