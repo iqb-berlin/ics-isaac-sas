@@ -17,7 +17,6 @@ from models.task import Task
 from models.tasks_put_request import TasksPutRequest
 from models.task_events_inner import TaskEventsInner
 from models.task_action import TaskAction
-from models.tasks_task_id_data_put200_response import TasksTaskIdDataPut200Response
 from tasks import tasks
 
 redis_host = os.getenv('REDIS_HOST') or 'localhost'
@@ -27,11 +26,11 @@ queue = Queue(connection=redis_queue)
 print("Redis Connected")
 
 def list_tasks() -> List[Task]:
-    them = redis_store.keys('task:*')
-    tasks = []
-    for one in them:
-        tasks.append(Task.from_json(redis_store.get(one)))
-    return list(tasks)
+    task_keys = redis_store.keys('task:*')
+    task_list = []
+    for task_key in task_keys:
+        task_list.append(Task.from_json(redis_store.get(task_key)))
+    return list(task_list)
 
 def run_task(task: Task) -> None:
     task.events.append(TaskEventsInner(
@@ -125,19 +124,19 @@ def get(task_id: str) -> Task:
 def store(task: Task) -> None:
     redis_store.set('task:' + task.id, task.to_json())
 
-def add_data(task_id: str, data: List[Response]) -> TasksTaskIdDataPut200Response:
+def add_data(task_id: str, data: List[Response]) -> DataChunk:
     chunk = store_data(ChunkType('input'), data)
     task = get(task_id)
     task.data.append(chunk)
     store(task)
-    return TasksTaskIdDataPut200Response(id = chunk)
+    return chunk
 
-def store_data(chunkType: ChunkType, data: List[Response]) -> DataChunk:
+def store_data(chunk_type: ChunkType, data: List[Response]) -> DataChunk:
     for item in data:
         print(type(item))
         print(item)
     chunk = DataChunk(
-        type = chunkType,
+        type = chunk_type,
         id = StrictStr(uuid.uuid4()),
     )
     data_as_json = json.dumps([row.to_dict() for row in data])
@@ -178,8 +177,9 @@ def delete(task_id):
         keys_to_delete.append('data:' + chunk.type + ':' + chunk.id)
     redis_store.delete(*keys_to_delete)
 
-def update_instructions(task_id: str, instructions: any) -> None:
+def update_instructions(task_id: str, instructions: any) -> Task:
     # TODO verify instructions
     task = get(task_id)
     task.instructions = instructions
     store(task)
+    return task
