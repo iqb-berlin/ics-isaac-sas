@@ -119,3 +119,8 @@ class Response(BaseModel):
         return _obj
 
 
+    def model_dump(self, *args, **kwargs):
+        data = super().model_dump(*args, **kwargs)
+        if "value" not in data:
+            data["value"] = None
+        return data
