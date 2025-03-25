@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import time
 import uuid
 
@@ -10,6 +11,7 @@ from redis import Redis, StrictRedis
 from rq.job import Job, JobStatus, Callback
 from typing_extensions import List
 
+from isaac_sas.instructions_train import InstructionsTrain
 from models.chunk_type import ChunkType
 from models.data_chunk import DataChunk
 from models.response import Response
@@ -25,6 +27,10 @@ redis_store = StrictRedis(host=redis_host, port=6379, db=0, decode_responses=Tru
 queue = Queue(connection=redis_queue)
 print("Redis Connected")
 
+def print_in_worker(*args):
+    print(args)
+    sys.stdout.flush()
+
 def list_tasks() -> List[Task]:
     task_keys = redis_store.keys('task:*')
     task_list = []
@@ -33,6 +39,7 @@ def list_tasks() -> List[Task]:
     return list(task_list)
 
 def run_task(task: Task) -> None:
+    print_in_worker('run_task')
     task.events.append(TaskEventsInner(
         status='start',
         timestamp = int(time.time())
@@ -42,20 +49,31 @@ def run_task(task: Task) -> None:
     input_data = [chunk for chunk in task.data if chunk.type == "input"]
 
     if task.type == 'train':
-        output = tasks.train(task.instructions, input_data)
+        ins = InstructionsTrain(**task.instructions)
+        print_in_worker(ins)
+        output = tasks.train(ins, input_data)
     else:
         output = tasks.example(input_data)
 
     chunk = store_data(ChunkType('output'), output)
     task.data.append(chunk)
     task.events.append(TaskEventsInner(
-        status='finish',
+        status = 'finish',
         timestamp = int(time.time())
     ))
     store(task)
 
-def job_failed(args):
-    print('Arrrgh', args)
+def job_failed(job: Job, redis: Redis, error: Exception, error2: Exception, *args):
+    print_in_worker(args[0])
+    print_in_worker('1')
+    print_in_worker(args[1])
+    task = get(job.id)
+    task.events.append(TaskEventsInner(
+        status = 'fail',
+        timestamp = int(time.time()),
+        message = str(error2)
+    ))
+    store(task)
 
 def action(task_id: str, action: TaskAction) -> Task:
     task = get(task_id)

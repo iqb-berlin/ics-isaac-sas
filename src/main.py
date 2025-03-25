@@ -16,7 +16,7 @@ def connect_debugger():
     except Exception:
         pass
 
-connect_debugger()
+# connect_debugger()
 
 mod_path = Path(__file__).parent
 isaac_sas.core.prepare(mod_path)
@@ -35,10 +35,10 @@ app.add_middleware(
 app.include_router(DefaultApiRouter)
 app.include_router(NativeApiRouter)
 
-@app.middleware("http")
-async def connect_debugger_mw(request: Request, call_next):
-    connect_debugger()
-    return await call_next(request)
+# @app.middleware("http")
+# async def connect_debugger_mw(request: Request, call_next):
+#     connect_debugger()
+#     return await call_next(request)
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
