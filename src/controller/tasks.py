@@ -41,7 +41,10 @@ def run_task(task: Task) -> None:
 
     input_data = [chunk for chunk in task.data if chunk.type == "input"]
 
-    output = tasks.example(input_data)
+    if task.type == 'train':
+        output = tasks.train(task.instructions, input_data)
+    else:
+        output = tasks.example(input_data)
 
     chunk = store_data(ChunkType('output'), output)
     task.data.append(chunk)

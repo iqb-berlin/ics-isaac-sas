@@ -1,4 +1,4 @@
-import isaac_sas.instructions as instructions
+from isaac_sas.instructions_train import get_schema
 from models.service_info import ServiceInfo
 
 def get_info() -> ServiceInfo:
@@ -7,7 +7,7 @@ def get_info() -> ServiceInfo:
         type = 'issac-sas-coding-service',
         version = '0.0.2', # TODO
         apiVersion = '0.0.2',
-        instructionsSchema = instructions.get_schema()
+        instructionsSchema = get_schema()
     )
 
 
