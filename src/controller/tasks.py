@@ -11,14 +11,16 @@ from redis import Redis, StrictRedis
 from rq.job import Job, JobStatus, Callback
 from typing_extensions import List
 
-from isaac_sas.instructions_train import InstructionsTrain
 from models.chunk_type import ChunkType
+from models.code import Code
 from models.data_chunk import DataChunk
 from models.response import Response
 from models.task import Task
-from models.tasks_put_request import TasksPutRequest
+from models.task_instructions import TaskInstructions
+from models.task_seed import TaskSeed
 from models.task_events_inner import TaskEventsInner
 from models.task_action import TaskAction
+from models.train import Train
 from tasks import tasks
 
 redis_host = os.getenv('REDIS_HOST') or 'localhost'
@@ -49,11 +51,16 @@ def run_task(task: Task) -> None:
     input_data = [chunk for chunk in task.data if chunk.type == "input"]
 
     if task.type == 'train':
+        print_in_worker('### TRAIN LIKE A MANIAC ###')
         print_in_worker(task.instructions)
-        ins = InstructionsTrain(**task.instructions)
-        print_in_worker(ins)
-        output = tasks.train(ins, input_data)
+        if not isinstance(task.instructions, Train):
+            raise "Instructions has wrong type: " + task.instructions.__class__.__name__
+        output = tasks.train(task.instructions, input_data)
     else:
+        print_in_worker('### CODE LIKE A MANIAC ###')
+        print_in_worker(task.instructions)
+        if not isinstance(task.instructions, Code):
+            raise "Instructions has wrong type: " + task.instructions.__class__.__name__
         output = tasks.example(input_data)
 
     chunk = store_data(ChunkType('output'), output)
@@ -113,9 +120,10 @@ def get_job(task_id: str) -> Job:
         raise HTTPException(status_code=500, detail="Task is there but Job not found!")
     return job
 
-def create(create_task: TasksPutRequest) -> Task:
+def create(create_task: TaskSeed) -> Task:
     task = Task(
         id = StrictStr(uuid.uuid4()),
+        label = create_task.label,
         type = create_task.type,
         events = [
             TaskEventsInner(
@@ -124,7 +132,7 @@ def create(create_task: TasksPutRequest) -> Task:
             )
         ],
         data = list(),
-        instructions = create_task.instructions or {}
+        instructions = TaskInstructions()
     )
     store(task)
     return task
@@ -197,8 +205,8 @@ def delete(task_id):
         keys_to_delete.append('data:' + chunk.type + ':' + chunk.id)
     redis_store.delete(*keys_to_delete)
 
-def update_instructions(task_id: str, instructions: any) -> Task:
-    # TODO verify instructions
+def update_instructions(task_id: str, instructions: TaskInstructions) -> Task:
+    # TODO verify if it's the correct type of instructions
     task = get(task_id)
     task.instructions = instructions
     store(task)

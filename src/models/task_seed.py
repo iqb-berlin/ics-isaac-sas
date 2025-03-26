@@ -20,20 +20,21 @@ import json
 
 
 
-from pydantic import BaseModel, ConfigDict
-from typing import Any, ClassVar, Dict, List
-from models.task_action import TaskAction
+from pydantic import BaseModel, ConfigDict, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from models.task_type import TaskType
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class TasksTaskIdPatchRequest(BaseModel):
+class TaskSeed(BaseModel):
     """
-    TasksTaskIdPatchRequest
+    TaskSeed
     """ # noqa: E501
-    action: TaskAction
-    __properties: ClassVar[List[str]] = ["action"]
+    label: Optional[StrictStr] = None
+    type: Optional[TaskType] = None
+    __properties: ClassVar[List[str]] = ["label", "type"]
 
     model_config = {
         "populate_by_name": True,
@@ -53,7 +54,7 @@ class TasksTaskIdPatchRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of TasksTaskIdPatchRequest from a JSON string"""
+        """Create an instance of TaskSeed from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -76,7 +77,7 @@ class TasksTaskIdPatchRequest(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of TasksTaskIdPatchRequest from a dict"""
+        """Create an instance of TaskSeed from a dict"""
         if obj is None:
             return None
 
@@ -84,7 +85,8 @@ class TasksTaskIdPatchRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "action": obj.get("action")
+            "label": obj.get("label"),
+            "type": obj.get("type")
         })
         return _obj
 

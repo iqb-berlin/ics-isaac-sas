@@ -20,25 +20,33 @@ import json
 
 
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List
-from models.task_action import TaskAction
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class TasksTaskIdPatchRequest(BaseModel):
+class TaskTypeInfoInstructionsSchema(BaseModel):
     """
-    TasksTaskIdPatchRequest
+    TaskTypeInfoInstructionsSchema
     """ # noqa: E501
-    action: TaskAction
-    __properties: ClassVar[List[str]] = ["action"]
+    id: StrictStr = Field(alias="$id")
+    the_schema: StrictStr = Field(alias="$schema")
+    __properties: ClassVar[List[str]] = ["$id", "$schema"]
+
+    @field_validator('the_schema')
+    def _schema_validate_enum(cls, value):
+        """Validates the enum"""
+        if value not in ('http://json-schema.org/draft/2020-12/schema#', 'http://json-schema.org/draft/2019-09/schema#', 'http://json-schema.org/draft-07/schema#'):
+            raise ValueError("must be one of enum values ('http://json-schema.org/draft/2020-12/schema#', 'http://json-schema.org/draft/2019-09/schema#', 'http://json-schema.org/draft-07/schema#')")
+        return value
 
     model_config = {
         "populate_by_name": True,
         "validate_assignment": True,
         "protected_namespaces": (),
+        "extra": 'allow'
     }
 
 
@@ -53,7 +61,7 @@ class TasksTaskIdPatchRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of TasksTaskIdPatchRequest from a JSON string"""
+        """Create an instance of TaskTypeInfoInstructionsSchema from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -76,7 +84,7 @@ class TasksTaskIdPatchRequest(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of TasksTaskIdPatchRequest from a dict"""
+        """Create an instance of TaskTypeInfoInstructionsSchema from a dict"""
         if obj is None:
             return None
 
@@ -84,7 +92,8 @@ class TasksTaskIdPatchRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "action": obj.get("action")
+            "$id": obj.get("$id"),
+            "$schema": obj.get("$schema")
         })
         return _obj
 

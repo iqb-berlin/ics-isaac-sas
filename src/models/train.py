@@ -20,20 +20,20 @@ import json
 
 
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List
-from models.task_action import TaskAction
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class TasksTaskIdPatchRequest(BaseModel):
+class Train(BaseModel):
     """
-    TasksTaskIdPatchRequest
+    Train
     """ # noqa: E501
-    action: TaskAction
-    __properties: ClassVar[List[str]] = ["action"]
+    item_prompt: StrictStr = Field(description="the prompt string (question) the answer was given in response for", alias="itemPrompt")
+    item_targets: List[StrictStr] = Field(description="a list of correct reference answers for the current item", alias="itemTargets")
+    __properties: ClassVar[List[str]] = ["itemPrompt", "itemTargets"]
 
     model_config = {
         "populate_by_name": True,
@@ -53,7 +53,7 @@ class TasksTaskIdPatchRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of TasksTaskIdPatchRequest from a JSON string"""
+        """Create an instance of Train from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -76,7 +76,7 @@ class TasksTaskIdPatchRequest(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of TasksTaskIdPatchRequest from a dict"""
+        """Create an instance of Train from a dict"""
         if obj is None:
             return None
 
@@ -84,7 +84,8 @@ class TasksTaskIdPatchRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "action": obj.get("action")
+            "itemPrompt": obj.get("itemPrompt"),
+            "itemTargets": obj.get("itemTargets")
         })
         return _obj
 

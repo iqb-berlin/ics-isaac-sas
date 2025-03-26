@@ -5,10 +5,10 @@ from pydantic import StrictStr, StrictInt
 
 from features.data import ShortAnswerInstance
 from isaac_sas import core
-from isaac_sas.instructions_train import InstructionsTrain
 from isaac_sas.models import LanguageDataRequest
 from models.response_value import ResponseValue
 from models.response import Response
+from models.train import Train
 
 
 def example(input: List[Response]) -> List[Response]:
@@ -27,7 +27,7 @@ def example(input: List[Response]) -> List[Response]:
 
 
 
-def train(instructions: InstructionsTrain, training_input: List[Response]) -> List[Response]:
+def train(instructions: Train, training_input: List[Response]) -> List[Response]:
 
     def convert(response: Response) -> ShortAnswerInstance:
         return ShortAnswerInstance(

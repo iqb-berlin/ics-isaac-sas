@@ -1,0 +1,29 @@
+openapi: 3.0.3
+info:
+  title: Coding-Service-Implementation - Isaac SaS
+  description: Coding-Service-Implementation - Isaac SaS
+  version: 0.0.1
+components:
+  schemas:
+    train:
+      type: object
+      properties:
+        itemPrompt:
+          type: string
+          description: the prompt string (question) the answer was given in response for
+        itemTargets:
+          type: array
+          items:
+            type: string
+          description: a list of correct reference answers for the current item
+      required:
+        - itemPrompt
+        - itemTargets
+    code:
+      type: object
+      properties:
+        model:
+          type: string
+      required:
+        - model
+

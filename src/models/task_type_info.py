@@ -20,25 +20,26 @@ import json
 
 
 
-from pydantic import BaseModel, ConfigDict
-from typing import Any, ClassVar, Dict, List
-from models.task_action import TaskAction
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from models.task_type_info_instructions_schema import TaskTypeInfoInstructionsSchema
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class TasksTaskIdPatchRequest(BaseModel):
+class TaskTypeInfo(BaseModel):
     """
-    TasksTaskIdPatchRequest
+    TaskTypeInfo
     """ # noqa: E501
-    action: TaskAction
-    __properties: ClassVar[List[str]] = ["action"]
+    instructions_text: Optional[StrictStr] = Field(default=None, alias="instructionsText")
+    instructions_schema: TaskTypeInfoInstructionsSchema = Field(alias="instructionsSchema")
+    __properties: ClassVar[List[str]] = ["instructionsText", "instructionsSchema"]
 
     model_config = {
         "populate_by_name": True,
         "validate_assignment": True,
-        "protected_namespaces": (),
+        "protected_namespaces": ()
     }
 
 
@@ -53,7 +54,7 @@ class TasksTaskIdPatchRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of TasksTaskIdPatchRequest from a JSON string"""
+        """Create an instance of TaskTypeInfo from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -72,11 +73,14 @@ class TasksTaskIdPatchRequest(BaseModel):
             },
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of instructions_schema
+        if self.instructions_schema:
+            _dict['instructionsSchema'] = self.instructions_schema.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of TasksTaskIdPatchRequest from a dict"""
+        """Create an instance of TaskTypeInfo from a dict"""
         if obj is None:
             return None
 
@@ -84,7 +88,8 @@ class TasksTaskIdPatchRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "action": obj.get("action")
+            "instructionsText": obj.get("instructionsText"),
+            "instructionsSchema": TaskTypeInfoInstructionsSchema.from_dict(obj.get("instructionsSchema")) if obj.get("instructionsSchema") is not None else None
         })
         return _obj
 

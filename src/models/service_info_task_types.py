@@ -21,19 +21,20 @@ import json
 
 
 from pydantic import BaseModel, ConfigDict
-from typing import Any, ClassVar, Dict, List
-from models.task_action import TaskAction
+from typing import Any, ClassVar, Dict, List, Optional
+from models.task_type_info import TaskTypeInfo
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class TasksTaskIdPatchRequest(BaseModel):
+class ServiceInfoTaskTypes(BaseModel):
     """
-    TasksTaskIdPatchRequest
+    ServiceInfoTaskTypes
     """ # noqa: E501
-    action: TaskAction
-    __properties: ClassVar[List[str]] = ["action"]
+    train: Optional[TaskTypeInfo] = None
+    code: Optional[TaskTypeInfo] = None
+    __properties: ClassVar[List[str]] = ["train", "code"]
 
     model_config = {
         "populate_by_name": True,
@@ -53,7 +54,7 @@ class TasksTaskIdPatchRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of TasksTaskIdPatchRequest from a JSON string"""
+        """Create an instance of ServiceInfoTaskTypes from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -72,11 +73,17 @@ class TasksTaskIdPatchRequest(BaseModel):
             },
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of train
+        if self.train:
+            _dict['train'] = self.train.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of code
+        if self.code:
+            _dict['code'] = self.code.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of TasksTaskIdPatchRequest from a dict"""
+        """Create an instance of ServiceInfoTaskTypes from a dict"""
         if obj is None:
             return None
 
@@ -84,7 +91,8 @@ class TasksTaskIdPatchRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "action": obj.get("action")
+            "train": TaskTypeInfo.from_dict(obj.get("train")) if obj.get("train") is not None else None,
+            "code": TaskTypeInfo.from_dict(obj.get("code")) if obj.get("code") is not None else None
         })
         return _obj
 
