@@ -5,4 +5,4 @@ WORKDIR /app
 COPY requirements.txt requirements.txt
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
-RUN pip install pydevd-pycharm~=243.25659.59
+RUN pip install pydevd-pycharm==243.26053.29

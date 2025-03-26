@@ -35,6 +35,7 @@ services:
       REDIS_HOST: iscs-redis
     ports:
       - 9999:9999
+#      - 9898:9898 # python debug server
     depends_on:
       - iscs-redis
 

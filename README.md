@@ -1,5 +1,21 @@
 # ISAAC Short Answer Scoring Backend
 
+## Run
+```
+docker compose up
+```
+
+
+## Development Setup
+We need the packages locally as well
+```
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+# Old Docs
+
 This component started out as a fork of sklearnflask, intended to be used as ML backend for UIMA-based Short Answer Assessment in the ISAAC project (https://www.uni-tuebingen.de/isaac). It evolved into a fully-fledged backend for Short Answer Scoring that can be used as a service with arbitrary frontends over HTTP.
 
 ## HTTP endpoints
@@ -28,18 +44,13 @@ To run the image in a container:
 docker run --name isaac-sas -p 80:80 ramonziai/isaac-ml-service
 ```
 
-## Manual/development setup
 
-```
-python3 -m venv venv
-source venv/bin/activate
-```
 
 
 ### Installing dependencies
 
 ```
-pip install -r requirements.txt
+
 ```
 
 ### Running the development server
