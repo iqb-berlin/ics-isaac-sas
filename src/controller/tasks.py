@@ -49,6 +49,7 @@ def run_task(task: Task) -> None:
     input_data = [chunk for chunk in task.data if chunk.type == "input"]
 
     if task.type == 'train':
+        print_in_worker(task.instructions)
         ins = InstructionsTrain(**task.instructions)
         print_in_worker(ins)
         output = tasks.train(ins, input_data)
@@ -63,15 +64,13 @@ def run_task(task: Task) -> None:
     ))
     store(task)
 
-def job_failed(job: Job, redis: Redis, error: Exception, error2: Exception, *args):
-    print_in_worker(args[0])
-    print_in_worker('1')
-    print_in_worker(args[1])
+def job_failed(job: Job, redis: Redis, errorClass, error: Exception, trace):
+    print_in_worker('job_failed')
     task = get(job.id)
     task.events.append(TaskEventsInner(
         status = 'fail',
         timestamp = int(time.time()),
-        message = str(error2)
+        message = str(error)
     ))
     store(task)
 
@@ -203,4 +202,6 @@ def update_instructions(task_id: str, instructions: any) -> Task:
     task = get(task_id)
     task.instructions = instructions
     store(task)
+    print('INSTRCUTUIONS SACED')
+    print(instructions)
     return task
