@@ -100,8 +100,8 @@ def test_trainFromAnswers(client, mock_instances):
     :param mock_instances: Mock short answer instances
     """
     # Change the onnx model directory for testing purposes.
-    main.onnx_model_dir = "testdata/train_data/onnx"
-    main.bow_model_dir = "testdata/train_data/bow"
+    main.onnx_model_dir = "../testdata/train_data/onnx"
+    main.bow_model_dir = "../testdata/train_data/bow"
 
     instance_dict = {
         "instances": mock_instances,

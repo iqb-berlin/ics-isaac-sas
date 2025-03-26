@@ -1,0 +1,49 @@
+### add Task
+PUT {{server}}/tasks
+Content-Type: application/json
+
+{
+  "type": "train",
+  "instructions": {
+    "itemXXPrompt": "one",
+    "itemTargets": [
+      "four",
+      "five"
+    ]
+  }
+}
+
+> {%
+  client.assert(response.status === 200);
+  client.global.set("task_id", response.body.id);
+%}
+
+
+### add some data
+PUT {{server}}/tasks/{{task_id}}/data
+Content-Type: application/json
+
+[
+  { "setId": "set1", "id": "a", "value": "one", "status": "VALUE_CHANGED" }
+]
+
+> {%
+  if (!('id' in response.body)) client.exit();
+  client.assert(response.status === 200);
+  client.assert(('id' in response.body));
+  client.global.set("input_chunk_id", response.body.id);
+%}
+
+### commit task
+PATCH {{server}}/tasks/{{task_id}}
+Content-Type: application/json
+
+{
+  "action": "commit"
+}
+
+> {%
+  import {wait} from "../../specs/coding-service/src/test/wait";
+  wait(10);
+  client.assert(response.status === 200);
+%}
