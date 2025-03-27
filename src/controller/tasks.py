@@ -47,8 +47,11 @@ def get(task_id: str) -> Task:
     if not task_str:
         raise HTTPException(status_code=404, detail="Task not found!")
     try:
+        print(' ######### GET ###### ' + task_id)
+        print(task_str)
         return Task.from_json(task_str)
     except Exception as e:
+        print(' ######### GET:Exception ###### ' + task_id)
         return Task(
             id = task_id,
             label = '<corrupted task>',
@@ -154,8 +157,7 @@ def create(create_task: TaskSeed) -> Task:
                 timestamp = StrictInt(time.time())
             )
         ],
-        data = list(),
-        instructions = TaskInstructions()
+        data = list()
     )
     store(task)
     return task
@@ -165,6 +167,8 @@ def get_status(task: Task) -> StrictStr:
     return task.events[0].status
 
 def store(task: Task) -> None:
+    task_json = task.to_json()
+    print(task_json)
     redis_store.set('task:' + task.id, task.to_json())
 
 def add_data(task_id: str, data: List[Response]) -> DataChunk:

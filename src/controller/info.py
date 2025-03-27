@@ -33,5 +33,4 @@ def get_schema(model: Type[Code|Train]):
     json_schema = model.model_json_schema()
     json_schema['$id'] = 'iscs-instructions-schema-' + ('code' if model == Code else 'train')
     json_schema['$schema'] = "http://json-schema.org/draft-07/schema#"
-    print(json_schema)
     return json_schema

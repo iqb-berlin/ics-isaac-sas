@@ -25,6 +25,7 @@ services:
       - iscs-redis
 
   iscs-backend:
+    container_name: iscs-backend
     build:
       dockerfile: backend.Dockerfile
     volumes:
@@ -39,8 +40,8 @@ services:
     depends_on:
       - iscs-redis
 
-
   iscs-rq-dashboard:
+    container_name: iscs-rq-dashboard
     build:
       dockerfile: worker.Dockerfile
     command: rq-dashboard --redis-url=redis://iscs-redis:6379

@@ -90,12 +90,13 @@ class Response(BaseModel):
         _dict = self.model_dump(
             by_alias=True,
             exclude={
+                'value'
             },
-            exclude_none=True,
+            exclude_none=True
         )
         # override the default output from pydantic by calling `to_dict()` of value
         if self.value:
-            _dict['value'] = self.value.to_dict()
+            _dict['value'] = self.value.get_value()
         return _dict
 
     @classmethod

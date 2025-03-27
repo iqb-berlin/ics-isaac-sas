@@ -212,4 +212,6 @@ class ResponseValue(BaseModel):
         """Returns the string representation of the actual instance"""
         return pprint.pformat(self.model_dump())
 
+    def get_value(self) -> Optional[Union[List[bool], List[float], List[str], bool, float, str]]:
+        return self.actual_instance
 
