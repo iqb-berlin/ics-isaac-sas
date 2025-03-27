@@ -4,6 +4,7 @@ Content-Type: application/json
 
 {
   "type": "train",
+  "label": "new task",
   "instructions": {
     "itemXXPrompt": "one",
     "itemTargets": [
@@ -33,6 +34,22 @@ Content-Type: application/json
   client.assert(('id' in response.body));
   client.global.set("input_chunk_id", response.body.id);
 %}
+
+### add instructions
+PATCH {{server}}/tasks/{{task_id}}/instructions
+Content-Type: application/json
+
+{
+    "itemPrompt": "one",
+    "itemTargets": [
+      "four",
+      "five"
+    ]
+}
+
+### get Task
+GET {{server}}/tasks/{{task_id}}
+Content-Type: application/json
 
 ### commit task
 PATCH {{server}}/tasks/{{task_id}}

@@ -20,15 +20,15 @@ from fastapi.exceptions import RequestValidationError
 
 import controller.tasks
 from controller import info, tasks
+from models.code import Code
 from models.extra_models import TokenModel  # noqa: F401
 from models.response import Response
 from models.service_info import ServiceInfo
 from models.task import Task
-from models.task_instructions import TaskInstructions
 from models.task_seed import TaskSeed
-from models.tasks_put_request import TasksPutRequest
 from models.tasks_task_id_patch_request import TasksTaskIdPatchRequest
 from models.data_chunk import DataChunk
+from models.train import Train
 
 router = APIRouter()
 
@@ -174,7 +174,7 @@ async def tasks_task_id_get(
 )
 async def tasks_task_id_instructions_patch(
     task_id: str = Path(..., description=""),
-    task_instructions: TaskInstructions = Body(None, description=""),
+    task_instructions: Train | Code | None = Body(None, description=""),
 ) -> Task:
     return tasks.update_instructions(task_id, task_instructions)
 

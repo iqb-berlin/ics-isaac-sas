@@ -4,6 +4,7 @@ import sys
 import time
 import uuid
 
+import pydantic
 from fastapi import HTTPException
 from pydantic import StrictStr, StrictInt
 from rq import Queue
@@ -16,7 +17,6 @@ from models.code import Code
 from models.data_chunk import DataChunk
 from models.response import Response
 from models.task import Task
-from models.task_instructions import TaskInstructions
 from models.task_seed import TaskSeed
 from models.task_events_inner import TaskEventsInner
 from models.task_action import TaskAction
@@ -47,14 +47,13 @@ def get(task_id: str) -> Task:
     if not task_str:
         raise HTTPException(status_code=404, detail="Task not found!")
     try:
-        print(' ######### GET ###### ' + task_id)
         print(task_str)
-        return Task.from_json(task_str)
+        task = Task.model_validate_json(task_str)
+        return task
     except Exception as e:
-        print(' ######### GET:Exception ###### ' + task_id)
         return Task(
             id = task_id,
-            label = '<corrupted task>',
+            label = '<ERROR>',
             type = TaskType('unknown'),
             events = [
                 TaskEventsInner(
@@ -80,13 +79,13 @@ def run_task(task: Task) -> None:
         print_in_worker('### TRAIN LIKE A MANIAC ###')
         print_in_worker(task.instructions)
         if not isinstance(task.instructions, Train):
-            raise "Instructions has wrong type: " + task.instructions.__class__.__name__
+            raise Exception("Instructions has wrong type: " + task.instructions.__class__.__name__)
         output = tasks.train(task.instructions, input_data)
     else:
         print_in_worker('### CODE LIKE A MANIAC ###')
         print_in_worker(task.instructions)
         if not isinstance(task.instructions, Code):
-            raise "Instructions has wrong type: " + task.instructions.__class__.__name__
+            raise Exception("Instructions has wrong type: " + task.instructions.__class__.__name__)
         output = tasks.example(input_data)
 
     chunk = store_data(ChunkType('output'), output)
@@ -167,9 +166,9 @@ def get_status(task: Task) -> StrictStr:
     return task.events[0].status
 
 def store(task: Task) -> None:
-    task_json = task.to_json()
+    task_json = task.model_dump_json()
     print(task_json)
-    redis_store.set('task:' + task.id, task.to_json())
+    redis_store.set('task:' + task.id, task.model_dump_json())
 
 def add_data(task_id: str, data: List[Response]) -> DataChunk:
     chunk = store_data(ChunkType('input'), data)
@@ -224,11 +223,9 @@ def delete(task_id):
         keys_to_delete.append('data:' + chunk.type + ':' + chunk.id)
     redis_store.delete(*keys_to_delete)
 
-def update_instructions(task_id: str, instructions: TaskInstructions) -> Task:
+def update_instructions(task_id: str, instructions: Train|Code|None) -> Task:
     # TODO verify if it's the correct type of instructions
     task = get(task_id)
     task.instructions = instructions
     store(task)
-    print('INSTRCUTUIONS SACED')
-    print(instructions)
     return task
