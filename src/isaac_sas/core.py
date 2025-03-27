@@ -65,126 +65,126 @@ def prepare(root_path: str) -> None:
 def fetch_stored_models():
     return {"modelIds": list(inf_sessions.keys())}
 
-def trainFromAnswers(req: LanguageDataRequest, bow_models=None):
-    model_id = req.modelId
-    # All feature extractor objects that should be used, are defined here.
-    ft_extractors = [SIMGroupExtractor()]
-
-    df = pd.DataFrame()
-
-    # Note that the BOW feature extractor is set up later because it needs a new
-    # setup for every new train-test split.
-    for ft_extractor in ft_extractors:
-        df = pd.concat([df, ft_extractor.extract(req.instances)], axis=1)
-
-    labels = pd.DataFrame([instance.label for instance in req.instances], columns=["labels"])
-
-    best_metrics = init_best_metrics(model_id)
-    best_model = None
-
-    n_splits = (10 if df.shape[0] > 1000 else 5) if df.shape[0] > 50 else 2
-
-    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=2)
-    for train_ids, test_ids in skf.split(df, labels):
-
-        # The right indices must be found to extract the BOW features for the correct instances.
-        train_instances = [req.instances[idx] for idx in train_ids]
-        bow_extractor = BOWGroupExtractor(train_instances)
-
-        x = pd.concat([df, bow_extractor.extract(req.instances)], axis=1)
-
-        # NOTE: If categorical features are included, One-hot should be included here as well.
-
-        start = time.time()
-
-        clf = RandomForestClassifier()
-
-        x_train = x.iloc[train_ids]
-        y_train = labels.iloc[train_ids]
-        x_test = x.iloc[test_ids]
-        y_test = labels.iloc[test_ids]
-
-        clf.fit(x_train, y_train)
-
-        y_pred = clf.predict(x_test)
-
-        end = time.time()
-
-        metrics = classification_report(
-            y_test, y_pred, output_dict=True, target_names=["False", "True"] # TODO allow more categories
-        )
-
-        accuracy = accuracy_score(y_test, y_pred)
-        f1 = metrics["macro avg"]["f1-score"]
-        cohens_kappa = cohen_kappa_score(y_test, y_pred)
-
-        # Add accuracy and cohens kappa to the metrics dictionary.
-        metrics["accuracy"] = accuracy
-        metrics["cohens_kappa"] = cohens_kappa
-
-        best_list = best_metrics[model_id]
-
-        best_acc = best_list["accuracy"]
-        best_f1 = best_list["f1"]
-        best_ck = best_list["cohens_kappa"]
-
-        for best, current in zip(
-                (best_acc, best_f1, best_ck), (accuracy, f1, cohens_kappa)
-        ):
-            if current > best["value"]:
-                best["value"] = current
-                best["metrics"] = metrics
-                best["model_type"] = clf.__class__.__name__
-                bow_models[model_id] = bow_extractor
-                bow_path = os.path.join(bow_model_dir, model_id + ".json")
-                with open(bow_path, "w") as bowf:
-                    json.dump(bow_extractor.__dict__, bowf)
-
-        best_list["train_time"] = end - start
-
-        # TODO: How to determine which model should be stored
-        # (accuracy, f1, cohens kappa)?
-        if not best_model or accuracy > best_acc["value"]:
-            best_model = clf
-            model_columns = list(x.columns)
-            num_features = clf.n_features_
-
-    # Write best results metrics to file
-    with open("model_metrics/" + model_id + ".json", "w") as score_file:
-        json.dump(best_metrics, score_file, indent=4)
-
-    # Store all models (no double storing if same model).
-    store_as_onnx(best_model, model_id, model_columns, num_features)
-
-    return best_metrics
+# def trainFromAnswers(req: LanguageDataRequest, bow_models=None):
+#     model_id = req.modelId
+#     # All feature extractor objects that should be used, are defined here.
+#     ft_extractors = [SIMGroupExtractor()]
+#
+#     df = pd.DataFrame()
+#
+#     # Note that the BOW feature extractor is set up later because it needs a new
+#     # setup for every new train-test split.
+#     for ft_extractor in ft_extractors:
+#         df = pd.concat([df, ft_extractor.extract(req.instances)], axis=1)
+#
+#     labels = pd.DataFrame([instance.label for instance in req.instances], columns=["labels"])
+#
+#     best_metrics = init_best_metrics(model_id)
+#     best_model = None
+#
+#     n_splits = (10 if df.shape[0] > 1000 else 5) if df.shape[0] > 50 else 2
+#
+#     skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=2)
+#     for train_ids, test_ids in skf.split(df, labels):
+#
+#         # The right indices must be found to extract the BOW features for the correct instances.
+#         train_instances = [req.instances[idx] for idx in train_ids]
+#         bow_extractor = BOWGroupExtractor(train_instances)
+#
+#         x = pd.concat([df, bow_extractor.extract(req.instances)], axis=1)
+#
+#         # NOTE: If categorical features are included, One-hot should be included here as well.
+#
+#         start = time.time()
+#
+#         clf = RandomForestClassifier()
+#
+#         x_train = x.iloc[train_ids]
+#         y_train = labels.iloc[train_ids]
+#         x_test = x.iloc[test_ids]
+#         y_test = labels.iloc[test_ids]
+#
+#         clf.fit(x_train, y_train)
+#
+#         y_pred = clf.predict(x_test)
+#
+#         end = time.time()
+#
+#         metrics = classification_report(
+#             y_test, y_pred, output_dict=True, target_names=["False", "True"] # TODO allow more categories
+#         )
+#
+#         accuracy = accuracy_score(y_test, y_pred)
+#         f1 = metrics["macro avg"]["f1-score"]
+#         cohens_kappa = cohen_kappa_score(y_test, y_pred)
+#
+#         # Add accuracy and cohens kappa to the metrics dictionary.
+#         metrics["accuracy"] = accuracy
+#         metrics["cohens_kappa"] = cohens_kappa
+#
+#         best_list = best_metrics[model_id]
+#
+#         best_acc = best_list["accuracy"]
+#         best_f1 = best_list["f1"]
+#         best_ck = best_list["cohens_kappa"]
+#
+#         for best, current in zip(
+#                 (best_acc, best_f1, best_ck), (accuracy, f1, cohens_kappa)
+#         ):
+#             if current > best["value"]:
+#                 best["value"] = current
+#                 best["metrics"] = metrics
+#                 best["model_type"] = clf.__class__.__name__
+#                 bow_models[model_id] = bow_extractor
+#                 bow_path = os.path.join(bow_model_dir, model_id + ".json")
+#                 with open(bow_path, "w") as bowf:
+#                     json.dump(bow_extractor.__dict__, bowf)
+#
+#         best_list["train_time"] = end - start
+#
+#         # TODO: How to determine which model should be stored
+#         # (accuracy, f1, cohens kappa)?
+#         if not best_model or accuracy > best_acc["value"]:
+#             best_model = clf
+#             model_columns = list(x.columns)
+#             num_features = clf.n_features_
+#
+#     # Write best results metrics to file
+#     with open("model_metrics/" + model_id + ".json", "w") as score_file:
+#         json.dump(best_metrics, score_file, indent=4)
+#
+#     # Store all models (no double storing if same model).
+#     store_as_onnx(best_model, model_id, model_columns, num_features)
+#
+#     return best_metrics
 
 def trainFromAnswers(req: LanguageDataRequest):
     model_id = req.modelId
     # All feature extractor objects that should be used, are defined here.
     ft_extractors = [SIMGroupExtractor()]
 
-    df = pd.DataFrame()
+    data_frame = pd.DataFrame()
 
     # Note that the BOW feature extractor is set up later because it needs a new
     # setup for every new train-test split.
     for ft_extractor in ft_extractors:
-        df = pd.concat([df, ft_extractor.extract(req.instances)], axis=1)
+        data_frame = pd.concat([data_frame, ft_extractor.extract(req.instances)], axis=1)
 
     labels = pd.DataFrame([instance.label for instance in req.instances], columns=["labels"])
 
     best_metrics = init_best_metrics(model_id)
     best_model = None
 
-    n_splits = (10 if df.shape[0] > 1000 else 5) if df.shape[0] > 50 else 2
+    n_splits = (10 if data_frame.shape[0] > 1000 else 5) if data_frame.shape[0] > 50 else 2
 
     skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=2)
-    for train_ids, test_ids in skf.split(df, labels):
+    for train_ids, test_ids in skf.split(data_frame, labels):
 
         # The right indices must be found to extract the BOW features for the correct instances.
         train_instances = [req.instances[idx] for idx in train_ids]
         bow_extractor = BOWGroupExtractor(train_instances)
 
-        x = pd.concat([df, bow_extractor.extract(req.instances)], axis=1)
+        x = pd.concat([data_frame, bow_extractor.extract(req.instances)], axis=1)
 
         # NOTE: If categorical features are included, One-hot should be included here as well.
 
@@ -221,9 +221,7 @@ def trainFromAnswers(req: LanguageDataRequest):
         best_f1 = best_list["f1"]
         best_ck = best_list["cohens_kappa"]
 
-        for best, current in zip(
-                (best_acc, best_f1, best_ck), (accuracy, f1, cohens_kappa)
-        ):
+        for best, current in zip((best_acc, best_f1, best_ck), (accuracy, f1, cohens_kappa)):
             if current > best["value"]:
                 best["value"] = current
                 best["metrics"] = metrics
@@ -240,7 +238,7 @@ def trainFromAnswers(req: LanguageDataRequest):
         if not best_model or accuracy > best_acc["value"]:
             best_model = clf
             model_columns = list(x.columns)
-            num_features = clf.n_features_
+            num_features = clf.n_classes_ # TODO is n_classes_ what was formally called .n_features_ ?
 
     # Write best results metrics to file
     with open("model_metrics/" + model_id + ".json", "w") as score_file:

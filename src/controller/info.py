@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import Type
 
-from pydantic import BaseModel
-
 from models.code import Code
 from models.service_info import ServiceInfo
 from models.service_info_task_types import ServiceInfoTaskTypes

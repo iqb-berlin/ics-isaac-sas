@@ -3,7 +3,7 @@ import warnings
 
 warnings.filterwarnings( action='error', message='')
 
-def test(input: str) -> str:
+def test(input: str) -> None:
     output = Response.from_json(input).to_json()
     print('in  : ' + input)
     print('out : ' + output)

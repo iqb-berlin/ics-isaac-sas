@@ -1,10 +1,8 @@
 import json
 import os
-import sys
 import time
 import uuid
 
-import pydantic
 from fastapi import HTTPException
 from pydantic import StrictStr, StrictInt
 from rq import Queue
@@ -22,17 +20,14 @@ from models.task_events_inner import TaskEventsInner
 from models.task_action import TaskAction
 from models.task_type import TaskType
 from models.train import Train
-from tasks import tasks
+from worker import iscs_worker as worker
+from worker.common import print_in_worker
 
 redis_host = os.getenv('REDIS_HOST') or 'localhost'
 redis_queue = Redis(host=redis_host, port=6379, db=0)
 redis_store = StrictRedis(host=redis_host, port=6379, db=0, decode_responses=True)
 queue = Queue(connection=redis_queue)
 print("Redis Connected")
-
-def print_in_worker(*args):
-    print(args)
-    sys.stdout.flush()
 
 def list_tasks() -> List[Task]:
     task_keys = redis_store.keys('task:*')
@@ -47,7 +42,6 @@ def get(task_id: str) -> Task:
     if not task_str:
         raise HTTPException(status_code=404, detail="Task not found!")
     try:
-        print(task_str)
         task = Task.model_validate_json(task_str)
         return task
     except Exception as e:
@@ -73,20 +67,18 @@ def run_task(task: Task) -> None:
     ))
     store(task)
 
-    input_data = [chunk for chunk in task.data if chunk.type == "input"]
+    input_chunks = [chunk for chunk in task.data if chunk.type == "input"]
+    input_data = [var for input_chunk in input_chunks for var in get_data(task.id, input_chunk.id)]
 
     if task.type == 'train':
-        print_in_worker('### TRAIN LIKE A MANIAC ###')
-        print_in_worker(task.instructions)
         if not isinstance(task.instructions, Train):
             raise Exception("Instructions has wrong type: " + task.instructions.__class__.__name__)
-        output = tasks.train(task.instructions, input_data)
+        output = worker.train(task.instructions, input_data)
     else:
-        print_in_worker('### CODE LIKE A MANIAC ###')
         print_in_worker(task.instructions)
         if not isinstance(task.instructions, Code):
             raise Exception("Instructions has wrong type: " + task.instructions.__class__.__name__)
-        output = tasks.example(input_data)
+        output = worker.example(input_data)
 
     chunk = store_data(ChunkType('output'), output)
     task.data.append(chunk)
@@ -167,7 +159,6 @@ def get_status(task: Task) -> StrictStr:
 
 def store(task: Task) -> None:
     task_json = task.model_dump_json()
-    print(task_json)
     redis_store.set('task:' + task.id, task.model_dump_json())
 
 def add_data(task_id: str, data: List[Response]) -> DataChunk:
@@ -178,14 +169,11 @@ def add_data(task_id: str, data: List[Response]) -> DataChunk:
     return chunk
 
 def store_data(chunk_type: ChunkType, data: List[Response]) -> DataChunk:
-    for item in data:
-        print(type(item))
-        print(item)
     chunk = DataChunk(
         type = chunk_type,
         id = StrictStr(uuid.uuid4()),
     )
-    data_as_json = json.dumps([row.to_dict() for row in data])
+    data_as_json = json.dumps(data)
     redis_store.set('data:' + chunk.type + ':' + chunk.id, data_as_json)
     return chunk
 
@@ -202,7 +190,7 @@ def delete_data(task_id: str, chunk_id: str) -> None:
     redis_store.delete('data:' + chunk_info.type + ':' + chunk_info.id)
     store(task)
 
-def get_data(task_id, chunk_id) -> str:
+def get_data(task_id, chunk_id) -> list[Response]:
     task = get(task_id)
     chunk_info = None
     for chunk in task.data:
@@ -211,10 +199,12 @@ def get_data(task_id, chunk_id) -> str:
             break
     if chunk_info is DataChunk:
         raise HTTPException(status_code=404, detail="Chunk " + chunk_id + "not found in task " + task_id + "!")
-    chunk_content = redis_store.get('data:' + chunk_info.type + ':' + chunk_info.id)
-    if not chunk_content:
+    chunk_content_str = redis_store.get('data:' + chunk_info.type + ':' + chunk_info.id)
+    if not chunk_content_str:
         raise HTTPException(status_code=404, detail="Chunk Content not found!")
-    return json.loads(chunk_content)
+    chunk_content_json = json.loads(chunk_content_str)
+    chunk_content = list(map(lambda row: Response.model_validate(row), chunk_content_json))
+    return chunk_content
 
 def delete(task_id):
     task = get(task_id)

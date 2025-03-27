@@ -25,7 +25,9 @@ PUT {{server}}/tasks/{{task_id}}/data
 Content-Type: application/json
 
 [
-  { "setId": "set1", "id": "a", "value": "one", "status": "VALUE_CHANGED" }
+  { "setId": "set1", "id": "a", "value": "one", "status": "VALUE_CHANGED", "code": 1 },
+  { "setId": "set1", "id": "a", "value": "sth", "status": "VALUE_CHANGED", "code": 2 },
+  { "setId": "set1", "id": "a", "value": "one", "status": "VALUE_CHANGED", "code": 1 }
 ]
 
 > {%
@@ -34,6 +36,10 @@ Content-Type: application/json
   client.assert(('id' in response.body));
   client.global.set("input_chunk_id", response.body.id);
 %}
+
+### look at data
+GET {{server}}/tasks/{{task_id}}/data/{{input_chunk_id}}
+Content-Type: application/json
 
 ### add instructions
 PATCH {{server}}/tasks/{{task_id}}/instructions
@@ -46,6 +52,8 @@ Content-Type: application/json
       "five"
     ]
 }
+
+
 
 ### get Task
 GET {{server}}/tasks/{{task_id}}
@@ -64,3 +72,7 @@ Content-Type: application/json
   wait(10);
   client.assert(response.status === 200);
 %}
+
+### get Task again
+GET {{server}}/tasks/{{task_id}}
+Content-Type: application/json
