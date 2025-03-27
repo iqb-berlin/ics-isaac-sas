@@ -72,7 +72,7 @@ async def tasks_get(
 async def tasks_put(
     task_seed: TaskSeed = Body(None, description=""),
 ) -> Task:
-    return tasks.create(task)
+    return tasks.create(task_seed)
 
 
 @router.delete(

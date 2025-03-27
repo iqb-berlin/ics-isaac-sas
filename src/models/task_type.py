@@ -36,6 +36,7 @@ class TaskType(str, Enum):
     """
     TRAIN = 'train'
     CODE = 'code'
+    UNKNOWN = 'unknown'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:

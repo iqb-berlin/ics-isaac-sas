@@ -20,6 +20,7 @@ from models.task_instructions import TaskInstructions
 from models.task_seed import TaskSeed
 from models.task_events_inner import TaskEventsInner
 from models.task_action import TaskAction
+from models.task_type import TaskType
 from models.train import Train
 from tasks import tasks
 
@@ -37,8 +38,30 @@ def list_tasks() -> List[Task]:
     task_keys = redis_store.keys('task:*')
     task_list = []
     for task_key in task_keys:
-        task_list.append(Task.from_json(redis_store.get(task_key)))
+        task_list.append(get(task_key.removeprefix('task:')))
     return list(task_list)
+
+
+def get(task_id: str) -> Task:
+    task_str = redis_store.get('task:' + task_id)
+    if not task_str:
+        raise HTTPException(status_code=404, detail="Task not found!")
+    try:
+        return Task.from_json(task_str)
+    except Exception as e:
+        return Task(
+            id = task_id,
+            label = '<corrupted task>',
+            type = TaskType('unknown'),
+            events = [
+                TaskEventsInner(
+                    status = 'fail',
+                    message = str(e),
+                    timestamp = 0
+                )
+            ],
+            data = []
+        )
 
 def run_task(task: Task) -> None:
     print_in_worker('run_task')
@@ -140,14 +163,6 @@ def create(create_task: TaskSeed) -> Task:
 def get_status(task: Task) -> StrictStr:
     task.events.sort(key=lambda event: event.timestamp, reverse=True)
     return task.events[0].status
-
-def get(task_id: str) -> Task:
-    task_str = redis_store.get('task:' + task_id)
-    if not task_str:
-        raise HTTPException(status_code=404, detail="Task not found!")
-    task = Task.from_json(task_str)
-    store(task)
-    return task
 
 def store(task: Task) -> None:
     redis_store.set('task:' + task.id, task.to_json())

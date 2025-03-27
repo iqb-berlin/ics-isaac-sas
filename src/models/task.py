@@ -21,7 +21,7 @@ import json
 
 
 from pydantic import BaseModel, ConfigDict, StrictStr
-from typing import Any, ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Optional
 from models.data_chunk import DataChunk
 from models.task_events_inner import TaskEventsInner
 from models.task_instructions import TaskInstructions
@@ -39,7 +39,7 @@ class Task(BaseModel):
     label: StrictStr
     type: TaskType
     events: List[TaskEventsInner]
-    instructions: TaskInstructions
+    instructions: Optional[TaskInstructions] = None
     data: List[DataChunk]
     __properties: ClassVar[List[str]] = ["id", "label", "type", "events", "instructions", "data"]
 
