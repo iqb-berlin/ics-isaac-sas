@@ -75,16 +75,11 @@ class SIMGroupExtractor(FeatureGroupExtractor):
             max_sim = -1.0
             for a in targets:
                 a = str(a)
-                try:
-                    lookup = self.sim_lookup_str(response, a, m)
-                    simCache.setdefault(lookup, m.normalized_similarity(response, a))
-                    sim = simCache[lookup]
-                    if sim > max_sim:
-                        max_sim = sim
-                except Exception as e:
-                    print(e, file=sys.stderr)
-                    # this should only happen for German answers and phonetic distance measures
-                    print("Error with measure!", m, "on strings '", response, "' and '", a, "'", file=sys.stderr)
+                lookup = self.sim_lookup_str(response, a, m)
+                simCache.setdefault(lookup, m.normalized_similarity(response, a))
+                sim = simCache[lookup]
+                if sim > max_sim:
+                    max_sim = sim
 
             resultScores.append(max_sim)
 
