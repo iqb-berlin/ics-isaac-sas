@@ -81,9 +81,10 @@ class SIMGroupExtractor(FeatureGroupExtractor):
                     sim = simCache[lookup]
                     if sim > max_sim:
                         max_sim = sim
-                except:
+                except Exception as e:
+                    print(e, file=sys.stderr)
                     # this should only happen for German answers and phonetic distance measures
-                    print("Error with measure", m, "on strings '", response, "' and '", a, "'", file=sys.stderr)
+                    print("Error with measure!", m, "on strings '", response, "' and '", a, "'", file=sys.stderr)
 
             resultScores.append(max_sim)
 
