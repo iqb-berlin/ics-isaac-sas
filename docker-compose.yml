@@ -1,6 +1,6 @@
 services:
-  iscs-redis:
-    container_name: iscs-redis
+  ics-is-redis:
+    container_name: ics-is-redis
     image: redis:7.4-bookworm
     command:
       - "bash"
@@ -11,21 +11,23 @@ services:
     ports:
       - 6379:6379
 
-  iscs-worker:
+  ics-is-worker:
     build:
       dockerfile: worker.Dockerfile
     volumes:
-      - ./src:/iscs
-    command: rq worker -u redis://iscs-redis:6379 default
+      - ./src:/ics-is
+      - /ics-is-data
+    command: rq worker -u redis://ics-is-redis:6379 default
     environment:
-      REDIS_HOST: iscs-redis
+      REDIS_HOST: ics-is-redis
+      IS_DATA_DIR: /data
     deploy:
       replicas: 3
     depends_on:
-      - iscs-redis
+      - ics-is-redis
 
-  iscs-backend:
-    container_name: iscs-backend
+  ics-is-backend:
+    container_name: ics-is-backend
     build:
       dockerfile: backend.Dockerfile
     volumes:
@@ -33,18 +35,19 @@ services:
       - ./data:/data
     command: uvicorn main:app --port 9999 --reload --app-dir src --host 0.0.0.0
     environment:
-      REDIS_HOST: iscs-redis
+      REDIS_HOST: ics-is-redis
+      IS_DATA_DIR: /data
     ports:
       - 9999:9999
 #      - 9898:9898 # python debug server
     depends_on:
-      - iscs-redis
+      - ics-is-redis
 
-  iscs-rq-dashboard:
-    container_name: iscs-rq-dashboard
+  ics-is-rq-dashboard:
+    container_name: ics-is-rq-dashboard
     build:
       dockerfile: worker.Dockerfile
-    command: rq-dashboard --redis-url=redis://iscs-redis:6379
+    command: rq-dashboard --redis-url=redis://ics-is-redis:6379
     ports:
       - 9181:9181
 #    profiles:

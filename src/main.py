@@ -1,3 +1,5 @@
+import sys
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,19 +9,16 @@ import isaac_sas.core
 
 from apis.default_api import router as DefaultApiRouter
 from apis.native_api import router as NativeApiRouter
-from pathlib import Path
 
 def connect_debugger():
-    try:
-        import pydevd_pycharm
-        pydevd_pycharm.settrace('172.17.0.1', port=9898, stdoutToServer=True, stderrToServer=True)
-    except Exception:
-        pass
+    if 'pydevd_pycharm' not in sys.modules:
+        try:
+            import pydevd_pycharm
+            pydevd_pycharm.settrace('172.17.0.1', port=9898, stdoutToServer=True, stderrToServer=True)
+        except:
+            pass
 
-# connect_debugger()
-
-mod_path = Path(__file__).parent
-isaac_sas.core.prepare(mod_path)
+isaac_sas.core.prepare()
 
 app = FastAPI()
 

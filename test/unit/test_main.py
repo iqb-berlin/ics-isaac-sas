@@ -1,7 +1,10 @@
 import json
 import os
+from sys import stderr
+
 import pytest
 import main
+from isaac_sas import core
 
 from fastapi.testclient import TestClient
 from main import app
@@ -21,7 +24,7 @@ def mock_instances():
         "itemTargets": ["one", "two", "three"],
         "learnerId": "0",
         "answer": "two",
-        "label": 1
+        "label": "True"
     }
     instance2 = {
         "taskId": "1",
@@ -30,7 +33,7 @@ def mock_instances():
         "itemTargets": ["four", "five", "six"],
         "learnerId": "1",
         "answer": "two",
-        "label": 1
+        "label": "True"
     }
     instance3 = {
         "taskId": "2",
@@ -39,7 +42,7 @@ def mock_instances():
         "itemTargets": ["four", "five", "six"],
         "learnerId": "2",
         "answer": "five",
-        "label": 2
+        "label": "False"
     }
     instance4 = {
         "taskId": "2",
@@ -48,7 +51,7 @@ def mock_instances():
         "itemTargets": ["four", "five", "six"],
         "learnerId": "2",
         "answer": "five",
-        "label": 2
+        "label": "False"
     }
     instances = [instance1, instance2, instance3, instance4]
 
@@ -99,9 +102,6 @@ def test_trainFromAnswers(client, mock_instances):
     :param client: A client for testing.
     :param mock_instances: Mock short answer instances
     """
-    # Change the onnx model directory for testing purposes.
-    main.onnx_model_dir = "../testdata/train_data/onnx"
-    main.bow_model_dir = "../testdata/train_data/bow"
 
     instance_dict = {
         "instances": mock_instances,
@@ -110,25 +110,28 @@ def test_trainFromAnswers(client, mock_instances):
     response = client.post("/trainFromAnswers", json=instance_dict)
 
     # Store states to check whether the file and session object were created.
-    path_exists = os.path.exists(os.path.join(main.onnx_model_dir, "random_data.onnx"))
-    bow_path_exists = os.path.exists(os.path.join(main.bow_model_dir, "random_data.json"))
-    metrics_path_exists = os.path.exists(os.path.join("model_metrics", "random_data.json"))
-    session_stored = "random_data" in main.inf_sessions
+    path_exists = os.path.exists(core.get_data_path('onnx_models', "random_data.onnx"))
+    bow_path_exists = os.path.exists(core.get_data_path('bow_models', "random_data.json"))
+    metrics_path_exists = os.path.exists(core.get_data_path("model_metrics", "random_data.json"))
+    session_stored = "random_data" in core.inf_sessions
 
     # Delete all files that have been created during training.
     if session_stored:
-        del main.inf_sessions["random_data"]
+        del core.inf_sessions["random_data"]
     if path_exists:
-        os.remove(os.path.join(main.onnx_model_dir, "random_data.onnx"))
+        os.remove(core.get_data_path('onnx_models', "random_data.onnx"))
     if bow_path_exists:
-        os.remove(os.path.join(main.bow_model_dir, "random_data.json"))
+        os.remove(core.get_data_path('bow_models', "random_data.json"))
     if metrics_path_exists:
-        os.remove(os.path.join("model_metrics", "random_data.json"))
+        os.remove(core.get_data_path("model_metrics", "random_data.json"))
 
-    main.onnx_model_dir = "onnx_models"
-    main.bow_model_dir = "bow_models"
     # The assertions are made after the clean-up process on the basis of the
     # stored states. This ensures that cleaning is done in any case.
+
+    if response.status_code >= 400:
+        print('Error returned:')
+        print(response.text)
+
     assert response.status_code == 200
     assert path_exists
     assert bow_path_exists
@@ -150,12 +153,16 @@ def test_predictFromAnswers(client, predict_instances):
 
     pred_response = client.post("/predictFromAnswers", json=pred_instance_dict)
 
+    if pred_response.status_code >= 400:
+        print('Error returned:')
+        print(pred_response.text)
+
     assert pred_response.status_code == 200
 
     response_dict = json.loads(pred_response.content.decode("utf-8"))
-    assert response_dict["predictions"][0]["prediction"] == 1
-    assert response_dict["predictions"][1]["prediction"] == 1
-    assert response_dict["predictions"][2]["prediction"] == 2
+    assert response_dict["predictions"][0]["prediction"] == '1'
+    assert response_dict["predictions"][1]["prediction"] == '1'
+    assert response_dict["predictions"][2]["prediction"] == '2'
 
 
 def test_fetchStoredModels(client):
@@ -164,4 +171,4 @@ def test_fetchStoredModels(client):
 
     response_dict = json.loads(response.content.decode("utf-8"))["modelIds"]
 
-    assert list(main.inf_sessions.keys()) == response_dict
+    assert list(core.inf_sessions.keys()) == response_dict

@@ -5,6 +5,8 @@ import shutil
 from builtins import str, len, list, max, Exception, print, int, float, zip, dict, open
 
 import time
+from typing import Literal
+
 import numpy as np
 import onnxruntime as rt
 import pandas as pd
@@ -27,33 +29,35 @@ from isaac_sas.models import LanguageDataRequest
 inf_sessions = {} # Inference session object for predictions.
 features = {} # in-memory feature data
 bow_models = {}
-onnx_model_dir = ''
-bow_model_dir = ''
 
-def prepare(root_path: str) -> None:
+def get_data_path(datadir: Literal['onnx_models', 'bow_models', 'model_metrics'], file_name: str = '') -> str:
+    path_from_env = os.environ.get('IS_DATA_DIR')
+    if not path_from_env:
+        raise Exception("Env IS_DATA_DIR not set")
+    if not os.path.exists(path_from_env):
+        raise Exception("Datadir " + path_from_env + " does not exist")
+    return os.path.join(path_from_env, datadir, file_name)
 
-    onnx_model_dir = (root_path / "../data/onnx_models").resolve().as_posix()
-    bow_model_dir = (root_path / "../data/bow_models").resolve().as_posix()
-
+def prepare() -> None:
 
     # Store all model objects and inference session objects in memory for
     # quick access.
-    for model_file in os.listdir(onnx_model_dir):
+    for model_file in os.listdir(get_data_path('onnx_models')):
         model_id = remove_suffix(model_file, ".onnx")
         if model_id not in inf_sessions:
             inf_sessions[model_id] = rt.InferenceSession(
-                os.path.join(onnx_model_dir, model_file)
+                get_data_path('onnx_models', model_file)
             )
 
     # For prediction from ShortAnswerInstances the BOW model belonging to the ML model
     # must be loaded for feature extraction.
-    for bow_file in os.listdir(bow_model_dir):
+    for bow_file in os.listdir(get_data_path('bow_models')):
         # Ignore hidden files like .keep
         if bow_file.startswith("."):
             continue
         model_id = remove_suffix(bow_file, ".json")
         if model_id not in bow_models:
-            bow_path = os.path.join(bow_model_dir, bow_file)
+            bow_path = get_data_path('bow_models', bow_file)
             with open(bow_path) as bowf:
                 state_dict = json.load(bowf)
                 # Instances list is passed empty here because bag of words setup has
@@ -227,7 +231,7 @@ def trainFromAnswers(req: LanguageDataRequest):
                 best["metrics"] = metrics
                 best["model_type"] = clf.__class__.__name__
                 bow_models[model_id] = bow_extractor
-                bow_path = os.path.join(bow_model_dir, model_id + ".json")
+                bow_path = get_data_path('bow_models', model_id + ".json")
                 with open(bow_path, "w") as bowf:
                     json.dump(bow_extractor.__dict__, bowf)
 
@@ -241,7 +245,8 @@ def trainFromAnswers(req: LanguageDataRequest):
             num_features = clf.n_classes_ # TODO is n_classes_ what was formally called .n_features_ ?
 
     # Write best results metrics to file
-    with open("model_metrics/" + model_id + ".json", "w") as score_file:
+    file_name = get_data_path('model_metrics', model_id + ".json")
+    with open(file_name, "w") as score_file:
         json.dump(best_metrics, score_file, indent=4)
 
     # Store all models (no double storing if same model).
@@ -286,24 +291,22 @@ def store_as_onnx(model, model_id, model_columns, num_features):
     # metadata_props attribute only allows sending strings.
     new_meta.value = " ".join(model_columns)
 
-    with open("{}/{}.onnx".format(onnx_model_dir, model_id), "wb") as onnx_file:
+    with open(get_data_path('onnx_models', model_id + '.onnx'), "wb") as onnx_file:
         onnx_file.write(clf_onnx.SerializeToString())
 
     # Store an inference session for this model to be used during prediction.
-    inf_sessions[model_id] = rt.InferenceSession(
-        "{}/{}.onnx".format(onnx_model_dir, model_id)
-    )
+    inf_sessions[model_id] = rt.InferenceSession(get_data_path('onnx_models', model_id + '.onnx'))
 
 def predictFromAnswers(req: LanguageDataRequest):
     model_id = req.modelId
-    if model_id not in [remove_suffix(model, ".onnx") for model in os.listdir(onnx_model_dir)]:
+    if model_id not in [remove_suffix(model, ".onnx") for model in os.listdir(get_data_path('onnx_models'))]:
         raise HTTPException(
             status_code=422,
             detail='Model with model ID "{}" could not be'
                    " found in the ONNX model directory."
                    " Please train first.".format(model_id),
         )
-    if model_id not in [remove_suffix(model, ".json") for model in os.listdir(bow_model_dir)]:
+    if model_id not in [remove_suffix(model, ".json") for model in os.listdir(get_data_path('bow_models'))]:
         raise HTTPException(
             status_code=422,
             detail='BOW Model with model ID "{}" could not be'
@@ -359,8 +362,8 @@ def do_prediction(data: DataFrame, model_id: str = None) -> dict:
 
 def wipe_models():
     try:
-        shutil.rmtree(onnx_model_dir)
-        os.makedirs(onnx_model_dir)
+        shutil.rmtree(get_data_path('onnx_models'))
+        os.makedirs(get_data_path('onnx_models'))
         return "ONNX Models wiped"
 
     except Exception as e:

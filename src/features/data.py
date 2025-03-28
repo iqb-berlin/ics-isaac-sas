@@ -30,4 +30,4 @@ class ShortAnswerInstance(BaseModel):
     itemTargets: List[str]
     learnerId: str
     answer: str
-    label: Optional[str]
+    label: Optional[str] = None
