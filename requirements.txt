@@ -7,7 +7,7 @@ pytest==5.4.3
 requests
 skl2onnx==1.18.0
 onnxruntime==1.20.1
-textdistance==4.2.1
+textdistance==4.6.3
 pydantic>=2
 redis==5.2.1
 rq==2.1.0
