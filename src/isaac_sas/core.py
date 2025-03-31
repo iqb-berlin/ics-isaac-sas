@@ -281,7 +281,7 @@ def init_best_metrics(model_id):
 
 def store_as_onnx(model, model_id, model_columns, num_features):
     initial_type = [("float_input", FloatTensorType([None, num_features]))]
-    clf_onnx = convert_sklearn(model, initial_types=initial_type, target_opset=12)
+    clf_onnx = convert_sklearn(model, initial_types=initial_type)
 
     # Manually pass the model columns to the converted model using the
     # metadata_props attribute.
