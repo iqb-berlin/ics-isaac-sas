@@ -11,7 +11,7 @@ data/xmi/
 .pycache
 */.pycache
 scribbles
-/SHIT
+
 
 data/bow_models/*.json
 !data/bow-models/test_pred_data.json

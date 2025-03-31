@@ -1,9 +1,7 @@
 import json
 import os
-from sys import stderr
 
 import pytest
-import main
 from isaac_sas import core
 
 from fastapi.testclient import TestClient
@@ -95,7 +93,7 @@ def predict_instances():
     return [instance1, instance2, instance3]
 
 
-def test_trainFromAnswers(client, mock_instances):
+def test_train_from_answers(client, mock_instances):
     """
     Test the /trainFromAnswers endpoint.
 
@@ -139,7 +137,7 @@ def test_trainFromAnswers(client, mock_instances):
     assert session_stored
 
 
-def test_predictFromAnswers(client, predict_instances):
+def test_predict_from_answers(client, predict_instances):
     """
     Test the /predictFromAnswers endpoint.
 
@@ -165,7 +163,7 @@ def test_predictFromAnswers(client, predict_instances):
     assert response_dict["predictions"][2]["prediction"] == '2'
 
 
-def test_fetchStoredModels(client):
+def test_fetch_stored_models(client):
     response = client.get("/fetchStoredModels")
     assert response.status_code == 200
 
