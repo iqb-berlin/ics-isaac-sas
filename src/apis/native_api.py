@@ -11,11 +11,11 @@ def get_fetch_stored_models():
 
 @router.post("/trainFromAnswers")
 def post_train_from_answers(req: LanguageDataRequest):
-    return core.trainFromAnswers(req)
+    return core.train_from_answers(req)
 
 @router.post("/predictFromAnswers", response_model=PredictFromLanguageDataResponse)
 def post_predict_from_answers(req: LanguageDataRequest):
-    return core.predictFromAnswers(req)
+    return core.predict_from_answers(req)
 
 @router.get("/wipe_models")
 def get_wipe_models():
