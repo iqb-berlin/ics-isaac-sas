@@ -24,7 +24,7 @@ from sklearn.metrics import cohen_kappa_score
 from sklearn.model_selection import StratifiedKFold
 
 from isaac_sas.functions import remove_suffix
-from isaac_sas.models import LanguageDataRequest
+from isaac_sas.models import LanguageDataRequest, PredictFromLanguageDataResponse, SinglePrediction
 
 inf_sessions = {} # Inference session object for predictions.
 features = {} # in-memory feature data
@@ -209,7 +209,7 @@ def store_as_onnx(model, model_id, model_columns, num_features):
     # Store an inference session for this model to be used during prediction.
     inf_sessions[model_id] = rt.InferenceSession(get_data_path('onnx_models', model_id + '.onnx'))
 
-def predict_from_answers(req: LanguageDataRequest):
+def predict_from_answers(req: LanguageDataRequest) -> PredictFromLanguageDataResponse:
     model_id = req.modelId
     if model_id not in [remove_suffix(model, ".onnx") for model in os.listdir(get_data_path('onnx_models'))]:
         raise HTTPException(
@@ -239,10 +239,9 @@ def predict_from_answers(req: LanguageDataRequest):
 
         predictions.append(do_prediction(data, model_id))
 
-    return {"predictions": predictions}
+    return PredictFromLanguageDataResponse(predictions = predictions)
 
-def do_prediction(data: DataFrame, model_id: str = None) -> dict:
-
+def do_prediction(data: DataFrame, model_id: str = None) -> SinglePrediction:
     session = inf_sessions[model_id]
 
     query = pd.get_dummies(data)
@@ -267,10 +266,10 @@ def do_prediction(data: DataFrame, model_id: str = None) -> dict:
     probs = pred[0]
 
     # prediction is the class with max probability
-    return {
-        "prediction": max(probs, key=lambda k: probs[k]),
-        "classProbabilities": probs,
-    }
+    return SinglePrediction(
+        prediction = max(probs, key=lambda k: probs[k]),
+        classProbabilities = probs
+    )
 
 def wipe_models():
     try:

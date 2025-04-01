@@ -78,7 +78,7 @@ def run_task(task: Task) -> None:
         print_in_worker(task.instructions)
         if not isinstance(task.instructions, Code):
             raise Exception("Instructions has wrong type: " + task.instructions.__class__.__name__)
-        output = worker.example(input_data)
+        output = worker.code(task.instructions, input_data)
 
     chunk = store_data(ChunkType('output'), output)
     task.data.append(chunk)
@@ -158,7 +158,6 @@ def get_status(task: Task) -> StrictStr:
     return task.events[0].status
 
 def store(task: Task) -> None:
-    task_json = task.model_dump_json()
     redis_store.set('task:' + task.id, task.model_dump_json())
 
 def add_data(task_id: str, data: List[Response]) -> DataChunk:
