@@ -1,3 +1,4 @@
+import json
 from time import sleep
 from typing import List
 
@@ -9,6 +10,8 @@ from isaac_sas.models import LanguageDataRequest
 from models.code import Code
 from models.response import Response
 from models.train import Train
+from worker.common import print_in_worker
+
 
 class ResponseRow(BaseModel):
     response: Response
@@ -90,7 +93,12 @@ def code(instructions: Code, input_data: List[Response]) -> List[Response]:
 
 
 
-def train(instructions: Train, input_data: List[Response]) -> List[Response]:
+def train(instructions: Train, input_data: List[Response]) -> str:
+    unique_codes = { obj.code for obj in input_data }
+    if len(unique_codes) != 2:
+        print_in_worker(unique_codes)
+        raise Exception('Insufficient training data: exactly two different codes must be given')
+
     def convert(response: Response) -> ShortAnswerInstance:
         return ShortAnswerInstance(
             taskId = 'test',
@@ -99,8 +107,17 @@ def train(instructions: Train, input_data: List[Response]) -> List[Response]:
             itemTargets = instructions.item_targets,
             learnerId = response.set_id,
             answer = response.value if isinstance(response.value, str) else '',
-            label = defaultLabels[response.code]  # TODO make get labels from instructions
+            label = code_to_label(response.code)  # TODO make get labels from instructions
         )
+
+    """
+    [
+    ShortAnswerInstance(taskId='test', itemId='test', itemPrompt='four', itemTargets=['four'], learnerId='auto', answer='four', label='True'), 
+    ShortAnswerInstance(taskId='test', itemId='test', itemPrompt='four', itemTargets=['four'], learnerId='auto', answer='three', label='False'),
+    ShortAnswerInstance(taskId='test', itemId='test', itemPrompt='four', itemTargets=['four'], learnerId='auto', answer='Four', label='True'),
+    ShortAnswerInstance(taskId='test', itemId='test', itemPrompt='four', itemTargets=['four'], learnerId='auto', answer='for', label='True')
+    ]
+    """
 
     responses = filter_responses(input_data)
 
@@ -108,10 +125,7 @@ def train(instructions: Train, input_data: List[Response]) -> List[Response]:
         raise Exception('Number of samples to small')
 
     mapped = list(map(convert, responses))
-
-    unique_labels = { obj.label for obj in mapped }
-    if len(unique_labels) < 2:
-        raise Exception('Insufficient training data: two different codes must be given')
+    print_in_worker(mapped)
 
     ldr = LanguageDataRequest(
         instances = mapped,
@@ -119,4 +133,4 @@ def train(instructions: Train, input_data: List[Response]) -> List[Response]:
     )
 
     metrics = core.train_from_answers(ldr)
-    return []
+    return json.dumps(metrics)

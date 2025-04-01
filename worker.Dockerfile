@@ -1,9 +1,12 @@
 FROM python:3.11
 
-RUN mkdir /iscs
+RUN mkdir /data
+RUN mkdir /data/bow_models
+RUN mkdir /data/model_metrics
+RUN mkdir /data/onnx_models
 
-WORKDIR /iscs
-
+RUN mkdir /ics-is
+WORKDIR /ics-is
 COPY src ./
 
 COPY requirements.txt ./

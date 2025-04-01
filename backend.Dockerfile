@@ -1,6 +1,9 @@
 FROM tiangolo/uvicorn-gunicorn:python3.11
 COPY src /app
-COPY data /data
+RUN mkdir /data
+RUN mkdir /data/bow_models
+RUN mkdir /data/model_metrics
+RUN mkdir /data/onnx_models
 WORKDIR /app
 COPY requirements.txt requirements.txt
 RUN pip install --upgrade pip

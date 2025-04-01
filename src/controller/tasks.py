@@ -5,7 +5,7 @@ import uuid
 
 from fastapi import HTTPException
 from pydantic import StrictStr, StrictInt
-from rq import Queue
+from rq import Queue, Worker
 from redis import Redis, StrictRedis
 from rq.job import Job, JobStatus, Callback
 from typing_extensions import List
@@ -60,10 +60,12 @@ def get(task_id: str) -> Task:
         )
 
 def run_task(task: Task) -> None:
-    print_in_worker('run_task')
+    current_worker = Worker.all(connection=redis_queue)[0]
+    print_in_worker(f"run_task in {current_worker.name}")
     task.events.append(TaskEventsInner(
         status='start',
-        timestamp = int(time.time())
+        timestamp = int(time.time()),
+        message = f"run_task in {current_worker.name}"
     ))
     store(task)
 
@@ -73,18 +75,20 @@ def run_task(task: Task) -> None:
     if task.type == 'train':
         if not isinstance(task.instructions, Train):
             raise Exception("Instructions has wrong type: " + task.instructions.__class__.__name__)
-        output = worker.train(task.instructions, input_data)
+        message = worker.train(task.instructions, input_data)
     else:
         print_in_worker(task.instructions)
         if not isinstance(task.instructions, Code):
             raise Exception("Instructions has wrong type: " + task.instructions.__class__.__name__)
         output = worker.code(task.instructions, input_data)
+        chunk = store_data(ChunkType('output'), output)
+        task.data.append(chunk)
+        message = ''
 
-    chunk = store_data(ChunkType('output'), output)
-    task.data.append(chunk)
     task.events.append(TaskEventsInner(
         status = 'finish',
-        timestamp = int(time.time())
+        timestamp = int(time.time()),
+        message = message
     ))
     store(task)
 
