@@ -11,16 +11,18 @@ from rq.job import Job, JobStatus, Callback
 from typing_extensions import List
 
 from models.chunk_type import ChunkType
-from models.code import Code
 from models.data_chunk import DataChunk
 from models.response import Response
 from models.task import Task
+from models.task_event_type import TaskEventType
+from models.task_instructions import TaskInstructions
 from models.task_seed import TaskSeed
-from models.task_events_inner import TaskEventsInner
+from models.task_event import TaskEvent
 from models.task_action import TaskAction
 from models.task_type import TaskType
-from models.train import Train
-from worker import iscs_worker as worker
+
+from models.task_update import TaskUpdate
+from worker import ics_worker as worker
 from worker.common import print_in_worker
 
 redis_host = os.getenv('REDIS_HOST') or 'localhost'
@@ -50,8 +52,8 @@ def get(task_id: str) -> Task:
             label = '<ERROR>',
             type = TaskType('unknown'),
             events = [
-                TaskEventsInner(
-                    status = 'fail',
+                TaskEvent(
+                    status = TaskEventType('fail'),
                     message = str(e),
                     timestamp = 0
                 )
@@ -62,8 +64,8 @@ def get(task_id: str) -> Task:
 def run_task(task: Task) -> None:
     current_worker = Worker.all(connection=redis_queue)[0]
     print_in_worker(f"run_task in {current_worker.name}")
-    task.events.append(TaskEventsInner(
-        status='start',
+    task.events.append(TaskEvent(
+        status = TaskEventType('start'),
         timestamp = int(time.time()),
         message = f"run_task in {current_worker.name}"
     ))
@@ -73,19 +75,19 @@ def run_task(task: Task) -> None:
     input_data = [var for input_chunk in input_chunks for var in get_data(task.id, input_chunk.id)]
 
     if task.type == 'train':
-        if not isinstance(task.instructions, Train):
+        if not isinstance(task.instructions, TaskInstructions):
             raise Exception("Instructions has wrong type: " + task.instructions.__class__.__name__)
         message = worker.train(task.instructions, input_data)
     else:
         print_in_worker(task.instructions)
-        if not isinstance(task.instructions, Code):
-            raise Exception("Instructions has wrong type: " + task.instructions.__class__.__name__)
+        if  not type(task.instructions) is str:
+            raise Exception("Instructions has wrong type: " + type(task.instructions))
         output = worker.code(task.instructions, input_data)
         chunk = store_data(ChunkType('output'), output)
         task.data.append(chunk)
         message = ''
 
-    task.events.append(TaskEventsInner(
+    task.events.append(TaskEvent(
         status = 'finish',
         timestamp = int(time.time()),
         message = message
@@ -95,8 +97,8 @@ def run_task(task: Task) -> None:
 def job_failed(job: Job, redis: Redis, errorClass, error: Exception, trace):
     print_in_worker('job_failed')
     task = get(job.id)
-    task.events.append(TaskEventsInner(
-        status = 'fail',
+    task.events.append(TaskEvent(
+        status = TaskEventType('fail'),
         timestamp = int(time.time()),
         message = str(error)
     ))
@@ -116,7 +118,7 @@ def action(task_id: str, action: TaskAction) -> Task:
             timeout = 5
         )
         queue.enqueue_job(job)
-        task.events.append(TaskEventsInner(
+        task.events.append(TaskEvent(
             status = StrictStr('commit'),
             timestamp = StrictInt(time.time())
         ))
@@ -128,7 +130,7 @@ def action(task_id: str, action: TaskAction) -> Task:
         if job.get_status() != JobStatus.QUEUED:
             job.cancel()
             job.delete()
-        task.events.append(TaskEventsInner(
+        task.events.append(TaskEvent(
             status = StrictStr('abort'),
             timestamp = StrictInt(time.time())
         ))
@@ -147,7 +149,7 @@ def create(create_task: TaskSeed) -> Task:
         label = create_task.label,
         type = create_task.type,
         events = [
-            TaskEventsInner(
+            TaskEvent(
                 status = StrictStr('create'),
                 timestamp = StrictInt(time.time())
             )
@@ -193,7 +195,7 @@ def delete_data(task_id: str, chunk_id: str) -> None:
     redis_store.delete('data:' + chunk_info.type + ':' + chunk_info.id)
     store(task)
 
-def get_data(task_id, chunk_id) -> list[Response]:
+def get_data(task_id: str, chunk_id: str) -> list[Response]:
     task = get(task_id)
     chunk_info = None
     for chunk in task.data:
@@ -209,16 +211,31 @@ def get_data(task_id, chunk_id) -> list[Response]:
     chunk_content = list(map(lambda row: Response.model_validate(row), chunk_content_json))
     return chunk_content
 
-def delete(task_id):
+def delete(task_id: str) -> None:
     task = get(task_id)
     keys_to_delete = ['task:' + task_id]
     for chunk in task.data:
         keys_to_delete.append('data:' + chunk.type + ':' + chunk.id)
     redis_store.delete(*keys_to_delete)
 
-def update_instructions(task_id: str, instructions: Train|Code|None) -> Task:
+def update_instructions(task_id: str, instructions: TaskInstructions | str | None) -> Task:
     # TODO verify if it's the correct type of instructions
     task = get(task_id)
     task.instructions = instructions
+    store(task)
+    return task
+
+
+def update(task_id: str, task_update: TaskUpdate) -> Task:
+    task = get(task_id)
+    if task_update.instructions:
+        if type(task_update.instructions) is str:
+            if not worker.coder_exists(str(task_update.instructions)):
+                raise HTTPException(status_code = 404, detail = f"Model not found: {task_update.instructions}")
+        task.instructions = task_update.instructions
+    if task_update.label:
+        task.label = task_update.label
+    if task_update.type:
+        task.type = task_update.type
     store(task)
     return task

@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 
-from builtins import str, len, list, max, Exception, print, int, float, zip, dict, open
+from builtins import str, list, max, Exception, print, zip, open
 
 import time
 from typing import Literal
@@ -68,8 +68,8 @@ def prepare() -> None:
                 bow_models[model_id].bag = state_dict["bag"]
 
 
-def fetch_stored_models():
-    return {"modelIds": list(inf_sessions.keys())}
+def fetch_stored_models() -> list[str]:
+    return list(inf_sessions.keys())
 
 def train_from_answers(req: LanguageDataRequest):
     model_id = req.modelId
@@ -283,3 +283,12 @@ def wipe_models():
             status_code=400,
             detail="Could not remove and recreate the onnx_models directory",
         )
+
+def delete_model(model_id: str) -> None:
+    file_path = get_data_path('onnx_models', f"{model_id}.onnx")
+    os.remove(file_path)
+
+
+def model_exists(model_id: str) -> bool:
+    file_path = get_data_path('onnx_models', f"{model_id}.onnx")
+    return os.path.exists(file_path)

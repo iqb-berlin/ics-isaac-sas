@@ -1,10 +1,6 @@
-from pydantic import BaseModel, Field, StrictInt, StrictStr, ConfigDict
+from pydantic import BaseModel, Field, StrictInt, StrictStr
 from typing import List, Optional, Union, Dict
 from typing_extensions import Annotated
-try:
-    from typing import Self
-except ImportError:
-    from typing_extensions import Self
 
 class Response(BaseModel):
     set_id: StrictStr = Field(description="Identifier of the set. Typically a user-id.", alias="setId")

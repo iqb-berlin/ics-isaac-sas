@@ -2,7 +2,7 @@
   <configuration default="false" name="generate code" type="SwaggerCodegen" editBeforeRun="true" show_console_on_std_err="false" show_console_on_std_out="false">
     <option name="allowRunningInParallel" value="false" />
     <option name="customTemplatesPath" value="" />
-    <option name="generateToPath" value="$PROJECT_DIR$/src/gen" />
+    <option name="generateToPath" value="$PROJECT_DIR$/gen" />
     <option name="generationParameters">
       <list />
     </option>

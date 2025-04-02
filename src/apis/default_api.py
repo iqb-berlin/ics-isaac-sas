@@ -17,18 +17,46 @@ from fastapi import (  # noqa: F401
 )
 
 import controller.tasks
-from controller import info, tasks
-from models.code import Code
-from models.extra_models import TokenModel  # noqa: F401
+from controller import info, tasks, coders
+from models.coder import Coder
 from models.response import Response
 from models.service_info import ServiceInfo
 from models.task import Task
+from models.task_action import TaskAction
 from models.task_seed import TaskSeed
-from models.tasks_task_id_patch_request import TasksTaskIdPatchRequest
 from models.data_chunk import DataChunk
-from models.train import Train
+from models.task_instructions import TaskInstructions
+from models.task_update import TaskUpdate
 
 router = APIRouter()
+
+@router.delete(
+    "/coders/{coder_id}",
+    responses={
+        200: {"description": "OK"},
+    },
+    tags=["default"],
+    summary="delete coder",
+    response_model_by_alias=True,
+)
+async def coders_coder_id_delete(
+        coder_id: str = Path(..., description=""),
+) -> None:
+    coders.delete(coder_id)
+
+
+@router.get(
+    "/coders",
+    responses={
+        200: {"model": List[str], "description": "OK"},
+    },
+    tags=["default"],
+    summary="list as available coders",
+    response_model_by_alias=True,
+)
+async def coders_get(
+) -> List[Coder]:
+    return coders.list()
 
 @router.get(
     "/info",
@@ -71,6 +99,37 @@ async def tasks_put(
     task_seed: TaskSeed = Body(None, description=""),
 ) -> Task:
     return tasks.create(task_seed)
+
+
+@router.delete(
+    "/tasks/{task_id}/data/{chunk_id}",
+    responses={
+        200: {"description": "OK"},
+    },
+    tags=["default"],
+    summary="delete a chunk of data from a specific task",
+    response_model_by_alias=True,
+)
+async def tasks_task_id_data_chunk_id_delete(
+    task_id: str = Path(..., description=""),
+    chunk_id: str = Path(..., description=""),
+) -> None:
+    return controller.tasks.delete_data(task_id, chunk_id)
+
+@router.post(
+    "/tasks/{task_id}/{action}",
+    responses={
+        200: {"model": Task, "description": "OK"},
+    },
+    tags=["default"],
+    summary="perform action on task",
+    response_model_by_alias=True,
+)
+async def tasks_task_id_action_post(
+    action: TaskAction = Path(..., description="action name, usually &#x60;abort&#x60; or &#x60;commit&#x60;"),
+    task_id: str = Path(..., description=""),
+) -> Task:
+    return controller.tasks.action(task_id, action)
 
 
 @router.delete(
@@ -152,32 +211,16 @@ async def tasks_task_id_get(
 
 
 @router.patch(
-    "/tasks/{task_id}/instructions",
-    responses={
-        200: {"model": Task, "description": "OK"},
-    },
-    tags=["default"],
-    summary="update instructions",
-    response_model_by_alias=True,
-)
-async def tasks_task_id_instructions_patch(
-    task_id: str = Path(..., description=""),
-    task_instructions: Train | Code | None = Body(None, description=""),
-) -> Task:
-    return tasks.update_instructions(task_id, task_instructions)
-
-
-@router.patch(
     "/tasks/{task_id}",
     responses={
         200: {"model": Task, "description": "OK"},
     },
     tags=["default"],
-    summary="perform action on task",
+    summary="update instructions or other fields",
     response_model_by_alias=True,
 )
 async def tasks_task_id_patch(
     task_id: str = Path(..., description=""),
-    tasks_task_id_patch_request: TasksTaskIdPatchRequest = Body(None, description=""),
+    task_update: TaskUpdate = Body(None, description=""),
 ) -> Task:
-    return tasks.action(task_id, tasks_task_id_patch_request.action)
+    return tasks.update(task_id, task_update)

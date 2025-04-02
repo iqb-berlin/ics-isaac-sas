@@ -1,15 +1,13 @@
 import json
-from time import sleep
 from typing import List
 
-from pydantic import StrictStr, StrictInt, BaseModel
+from pydantic import StrictInt, BaseModel
 
 from features.data import ShortAnswerInstance
 from isaac_sas import core
 from isaac_sas.models import LanguageDataRequest
-from models.code import Code
 from models.response import Response
-from models.train import Train
+from models.task_instructions import TaskInstructions
 from worker.common import print_in_worker
 
 
@@ -59,7 +57,7 @@ def code_to_label(code: int) -> str:
     return defaultLabels[code]
 
 
-def code(instructions: Code, input_data: List[Response]) -> List[Response]:
+def code(model_id: str, input_data: List[Response]) -> List[Response]:
     def convert_to_sai(row: ResponseRow) -> ShortAnswerInstance:
         return ShortAnswerInstance(
             taskId = 'test',
@@ -74,7 +72,7 @@ def code(instructions: Code, input_data: List[Response]) -> List[Response]:
 
     ldr = LanguageDataRequest(
         instances = list(map(convert_to_sai, list(filter(filter_uncodable_rows, response_rows)))),
-        modelId = 'test' # TODO
+        modelId = model_id
     )
 
     result = core.predict_from_answers(ldr)
@@ -93,7 +91,7 @@ def code(instructions: Code, input_data: List[Response]) -> List[Response]:
 
 
 
-def train(instructions: Train, input_data: List[Response]) -> str:
+def train(instructions: TaskInstructions, input_data: List[Response]) -> str:
     unique_codes = { obj.code for obj in input_data }
     if len(unique_codes) != 2:
         print_in_worker(unique_codes)
@@ -134,3 +132,9 @@ def train(instructions: Train, input_data: List[Response]) -> str:
 
     metrics = core.train_from_answers(ldr)
     return json.dumps(metrics)
+
+def coder_exists(coder_id: str) -> bool:
+    return core.model_exists(coder_id)
+
+def delete_coder(coder_id: str) -> None:
+    return core.delete_model(coder_id)

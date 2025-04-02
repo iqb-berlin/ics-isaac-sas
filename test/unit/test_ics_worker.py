@@ -2,22 +2,17 @@ import os
 import unittest
 import warnings
 
-from sympy.testing import pytest
-
-
 from isaac_sas import core
 from models.response import Response
-from models.code import Code
-from models.train import Train
-from worker.iscs_worker import code, train
-
+from models.task_instructions import TaskInstructions
+from worker.ics_worker import train, code
 
 
 class IssacSaS(unittest.TestCase):
     def test_train_and_predict(self):
         warnings.simplefilter('error')
 
-        instructions_train = Train(
+        instructions_train = TaskInstructions(
             itemPrompt = 'insert a number!',
             itemTargets = ['one', 'two', 'three'],
         )
@@ -53,11 +48,7 @@ class IssacSaS(unittest.TestCase):
             )
         ]
 
-        instructions_code = Code(
-            model = 'test'
-        )
-
-        result = train(instructions_code, data)
+        result = train(instructions_train, data)
 
         path_exists = os.path.exists(core.get_data_path('onnx_models', "test.onnx"))
         bow_path_exists = os.path.exists(core.get_data_path('bow_models', "test.json"))
@@ -82,7 +73,7 @@ class IssacSaS(unittest.TestCase):
                 value = 2
             )
         ]
-        result = code(instructions, data)
+        result = code('test', data)
 
         assert len(result) == 2
         assert result[0].codingProbabilities[0] > result[0].codingProbabilities[1]

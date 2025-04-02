@@ -4,12 +4,10 @@ from pydantic import StrictStr, StrictInt
 
 import warnings
 
-from models.code import Code
 from models.task import Task
-from models.task_events_inner import TaskEventsInner
+from models.task_event import TaskEvent
 from models.task_seed import TaskSeed
 from models.task_type import TaskType
-from models.train import Train
 
 warnings.filterwarnings( action='error', message='')
 
@@ -20,7 +18,7 @@ def create(create_task: TaskSeed) -> Task:
         label = create_task.label or 'new: ' + create_task.type,
         type = create_task.type,
         events = [
-            TaskEventsInner(
+            TaskEvent(
                 status = StrictStr('create'),
                 timestamp = StrictInt(time.time())
             )

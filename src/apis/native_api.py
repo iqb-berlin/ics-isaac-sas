@@ -7,7 +7,7 @@ router = APIRouter()
 
 @router.get("/fetchStoredModels", response_model=ModelIdResponse)
 def get_fetch_stored_models():
-    return core.fetch_stored_models()
+    return {"modelIds": core.fetch_stored_models()}
 
 @router.post("/trainFromAnswers")
 def post_train_from_answers(req: LanguageDataRequest):
