@@ -38,6 +38,7 @@ router = APIRouter()
     tags=["default"],
     summary="delete coder",
     response_model_by_alias=True,
+    response_model_exclude_none = True,
 )
 async def coders_coder_id_delete(
         coder_id: str = Path(..., description=""),
@@ -53,6 +54,7 @@ async def coders_coder_id_delete(
     tags=["default"],
     summary="list as available coders",
     response_model_by_alias=True,
+    response_model_exclude_none = True,
 )
 async def coders_get(
 ) -> List[Coder]:
@@ -66,6 +68,7 @@ async def coders_get(
     tags=["default"],
     summary="return conding service identification",
     response_model_by_alias=True,
+    response_model_exclude_none = True,
 )
 async def info_get(
 ) -> ServiceInfo:
@@ -80,6 +83,7 @@ async def info_get(
     tags=["default"],
     summary="get list of all tasks",
     response_model_by_alias=True,
+    response_model_exclude_none = True,
 )
 async def tasks_get(
 ) -> List[Task]:
@@ -94,6 +98,7 @@ async def tasks_get(
     tags=["default"],
     summary="add a task",
     response_model_by_alias=True,
+    response_model_exclude_none = True,
 )
 async def tasks_put(
     task_seed: TaskSeed = Body(None, description=""),
@@ -109,6 +114,7 @@ async def tasks_put(
     tags=["default"],
     summary="delete a chunk of data from a specific task",
     response_model_by_alias=True,
+    response_model_exclude_none = True,
 )
 async def tasks_task_id_data_chunk_id_delete(
     task_id: str = Path(..., description=""),
@@ -124,6 +130,7 @@ async def tasks_task_id_data_chunk_id_delete(
     tags=["default"],
     summary="perform action on task",
     response_model_by_alias=True,
+    response_model_exclude_none = True,
 )
 async def tasks_task_id_action_post(
     action: TaskAction = Path(..., description="action name, usually &#x60;abort&#x60; or &#x60;commit&#x60;"),
@@ -140,6 +147,7 @@ async def tasks_task_id_action_post(
     tags=["default"],
     summary="delete a chunk of data from a specific task",
     response_model_by_alias=True,
+    response_model_exclude_none = True,
 )
 async def tasks_task_id_data_chunk_id_delete(
     task_id: str = Path(..., description=""),
@@ -173,6 +181,7 @@ async def tasks_task_id_data_chunk_id_get(
     tags=["default"],
     summary="add a chunk of data for a specific task",
     response_model_by_alias=True,
+    response_model_exclude_none = True,
 )
 async def tasks_task_id_data_put(
     task_id: str = Path(..., description=""),
@@ -188,6 +197,7 @@ async def tasks_task_id_data_put(
     },
     tags=["default"],
     response_model_by_alias=True,
+    response_model_exclude_none = True,
 )
 async def tasks_task_id_delete(
     task_id: str = Path(..., description=""),
@@ -203,6 +213,7 @@ async def tasks_task_id_delete(
     tags=["default"],
     summary="get specific task",
     response_model_by_alias=True,
+    response_model_exclude_none = True,
 )
 async def tasks_task_id_get(
     task_id: str = Path(..., description=""),
@@ -218,6 +229,7 @@ async def tasks_task_id_get(
     tags=["default"],
     summary="update instructions or other fields",
     response_model_by_alias=True,
+    response_model_exclude_none = True,
 )
 async def tasks_task_id_patch(
     task_id: str = Path(..., description=""),
