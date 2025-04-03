@@ -107,8 +107,13 @@ def job_failed(job: Job, redis: Redis, errorClass, error: Exception, trace):
 def action(task_id: str, action: TaskAction) -> Task:
     task = get(task_id)
     if action == "commit":
-        if get_status(task) != 'create':
-            raise HTTPException(status_code = 400, detail = 'Task already commited')
+        if get_status(task) != 'start':
+            raise HTTPException(status_code = 400, detail = 'Task already running!')
+        task.events.append(TaskEvent(
+            status = StrictStr('commit'),
+            timestamp = StrictInt(time.time())
+        ))
+        store(task)
         job = Job.create(
             func = run_task,
             id = task_id,
@@ -118,13 +123,10 @@ def action(task_id: str, action: TaskAction) -> Task:
             timeout = 5
         )
         queue.enqueue_job(job)
-        task.events.append(TaskEvent(
-            status = StrictStr('commit'),
-            timestamp = StrictInt(time.time())
-        ))
-        store(task)
+
     if action == "abort":
-        if get_status(task) != 'commit':
+        status = get_status(task)
+        if status != 'commit' and status != 'start':
             raise HTTPException(status_code = 400, detail = 'Task not commited')
         job = get_job(task_id)
         if job.get_status() != JobStatus.QUEUED:

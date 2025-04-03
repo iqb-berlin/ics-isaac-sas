@@ -25,6 +25,7 @@ from sklearn.model_selection import StratifiedKFold
 
 from isaac_sas.functions import remove_suffix
 from isaac_sas.models import LanguageDataRequest, PredictFromLanguageDataResponse, SinglePrediction
+from worker.common import print_in_worker
 
 inf_sessions = {} # Inference session object for predictions.
 features = {} # in-memory feature data
@@ -119,6 +120,9 @@ def train_from_answers(req: LanguageDataRequest):
 
         end = time.time()
 
+        print_in_worker(y_test)
+        print_in_worker(y_pred)
+        # Problem: random selected sample may contain pny true or false!
         metrics = classification_report(
             y_test, y_pred, output_dict=True, target_names=["False", "True"] # TODO allow more categories
         )
