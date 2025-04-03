@@ -1,21 +1,5 @@
-# coding: utf-8
-
-from typing import Dict, List, Any  # noqa: F401
-
-from fastapi import (  # noqa: F401
-    APIRouter,
-    Body,
-    Cookie,
-    Depends,
-    Form,
-    Header,
-    Path,
-    Query,
-    Response,
-    Security,
-    status,
-)
-
+from typing import Dict, List, Any
+from fastapi import APIRouter, Body, Path
 import controller.tasks
 from controller import info, tasks, coders
 from models.coder import Coder
@@ -25,7 +9,6 @@ from models.task import Task
 from models.task_action import TaskAction
 from models.task_seed import TaskSeed
 from models.data_chunk import DataChunk
-from models.task_instructions import TaskInstructions
 from models.task_update import TaskUpdate
 
 router = APIRouter()
@@ -235,4 +218,5 @@ async def tasks_task_id_patch(
     task_id: str = Path(..., description=""),
     task_update: TaskUpdate = Body(None, description=""),
 ) -> Task:
+    print('okay')
     return tasks.update(task_id, task_update)

@@ -10,8 +10,8 @@ def get_info() -> ServiceInfo:
         id = 'server ID',  # TODO
         type = 'issac-sas-coding-service',
         version = '0.0.3', # TODO
-        apiVersion = '0.0.3',
-        instructionsText = '',
+        apiVersion = '0.0.4',
+        instructionsText = '(test)',
         instructionsSchema = get_schema(TaskInstructions)
     )
 

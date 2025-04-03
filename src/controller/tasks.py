@@ -44,7 +44,7 @@ def get(task_id: str) -> Task:
     if not task_str:
         raise HTTPException(status_code=404, detail="Task not found!")
     try:
-        task = Task.model_validate_json(task_str)
+        task = Task.model_validate_json(task_str, by_name = True)
         return task
     except Exception as e:
         return Task(
@@ -88,7 +88,7 @@ def run_task(task: Task) -> None:
         message = ''
 
     task.events.append(TaskEvent(
-        status = 'finish',
+        status = TaskEventType('finish'),
         timestamp = int(time.time()),
         message = message
     ))
@@ -224,7 +224,6 @@ def update_instructions(task_id: str, instructions: TaskInstructions | str | Non
     task.instructions = instructions
     store(task)
     return task
-
 
 def update(task_id: str, task_update: TaskUpdate) -> Task:
     task = get(task_id)
