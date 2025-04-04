@@ -218,5 +218,4 @@ async def tasks_task_id_patch(
     task_id: str = Path(..., description=""),
     task_update: TaskUpdate = Body(None, description=""),
 ) -> Task:
-    print('okay')
     return tasks.update(task_id, task_update)

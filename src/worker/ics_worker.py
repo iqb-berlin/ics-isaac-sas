@@ -1,10 +1,11 @@
 import json
-from typing import List
+from typing import List, Final
 
 from pydantic import StrictInt, BaseModel
 
 from features.data import ShortAnswerInstance
 from isaac_sas import core
+from isaac_sas.core import defaultLabels
 from isaac_sas.models import LanguageDataRequest
 from models.response import Response
 from models.task_instructions import TaskInstructions
@@ -15,36 +16,34 @@ class ResponseRow(BaseModel):
     response: Response
     rowToCodeId: int | None
 
-def is_codable(response: Response) -> bool:
+def is_suitable_for_code(response: Response) -> bool:
     # TODO filter specific var
     # TODO filter status
     return isinstance(response.value, str)
 
-def analyze_responses(responses: List[Response]) -> List[ResponseRow]:
+def is_suitable_for_train(response: Response) -> bool:
+    # TODO filter specific var
+    # TODO filter status
+    return (isinstance(response.value, str)
+        and response.code is not None
+    )
+
+def mark_unsuitable_rows(responses: List[Response]) -> List[ResponseRow]:
     rows : List[ResponseRow] = []
     rows_to_code_counter = 0
     for (i, response) in enumerate(responses):
         rows.append(
             ResponseRow(
                 response = response,
-                rowToCodeId = rows_to_code_counter if is_codable(response) else None
+                rowToCodeId = rows_to_code_counter if is_suitable_for_code(response) else None
             )
         )
-        if is_codable(response):
+        if is_suitable_for_code(response):
             rows_to_code_counter += 1
     return rows
 
-def filter_uncodable_rows(responseRow: ResponseRow) -> bool:
-    return responseRow.rowToCodeId is not None
-
-def filter_responses(responses: List[Response]) -> List[Response]:
-    return list(filter(is_codable, responses))
-
-
-defaultLabels = [
-    "False",
-    "True"
-]
+def filter_marked_rows(response_rows: List[ResponseRow]) -> List[ResponseRow]:
+    return list(filter(lambda response_row: response_row.rowToCodeId is not None, response_rows))
 
 def label_to_code(label: str) -> StrictInt:
     if label not in defaultLabels:
@@ -68,10 +67,10 @@ def code(model_id: str, input_data: List[Response]) -> List[Response]:
             answer = row.response.value if isinstance(row.response.value, str) else '',
         )
 
-    response_rows = analyze_responses(input_data)
+    response_rows = mark_unsuitable_rows(input_data)
 
     ldr = LanguageDataRequest(
-        instances = list(map(convert_to_sai, list(filter(filter_uncodable_rows, response_rows)))),
+        instances = list(map(convert_to_sai, filter_marked_rows(response_rows))),
         modelId = model_id
     )
 
@@ -92,15 +91,10 @@ def code(model_id: str, input_data: List[Response]) -> List[Response]:
 
 
 def train(instructions: TaskInstructions, input_data: List[Response]) -> str:
-    unique_codes = { obj.code for obj in input_data }
-    if len(unique_codes) != 2:
-        print_in_worker(unique_codes)
-        raise Exception('Insufficient training data: exactly two different codes must be given')
-
     def convert(response: Response) -> ShortAnswerInstance:
         return ShortAnswerInstance(
-            taskId = 'test',
-            itemId = 'test',
+            taskId = 'test', # TODO
+            itemId = 'test', # TODO
             itemPrompt = instructions.item_prompt,
             itemTargets = instructions.item_targets,
             learnerId = response.set_id,
@@ -108,29 +102,25 @@ def train(instructions: TaskInstructions, input_data: List[Response]) -> str:
             label = code_to_label(response.code)  # TODO make get labels from instructions
         )
 
-    """
-    [
-    ShortAnswerInstance(taskId='test', itemId='test', itemPrompt='four', itemTargets=['four'], learnerId='auto', answer='four', label='True'), 
-    ShortAnswerInstance(taskId='test', itemId='test', itemPrompt='four', itemTargets=['four'], learnerId='auto', answer='three', label='False'),
-    ShortAnswerInstance(taskId='test', itemId='test', itemPrompt='four', itemTargets=['four'], learnerId='auto', answer='Four', label='True'),
-    ShortAnswerInstance(taskId='test', itemId='test', itemPrompt='four', itemTargets=['four'], learnerId='auto', answer='for', label='True')
-    ]
-    """
-
-    responses = filter_responses(input_data)
+    responses = list(filter(is_suitable_for_train, input_data))
 
     if len(responses) < 2:
-        raise Exception('Number of samples to small')
+        raise Exception(f'Number of suitable samples to small: {len(responses)}.')
+
+    unique_codes = { obj.code for obj in responses }
+    if len(unique_codes) != len(defaultLabels):
+        print_in_worker(unique_codes)
+        raise Exception(f'Insufficient training data: {len(unique_codes)} are found, but it has to be exactly {len(defaultLabels)}.')
 
     mapped = list(map(convert, responses))
     print_in_worker(mapped)
 
     ldr = LanguageDataRequest(
         instances = mapped,
-        modelId = 'test' # instructions.modelId,
+        modelId = 'test' # TODO
     )
 
-    metrics = core.train_from_answers(ldr)
+    metrics = core.train_from_answers(ldr, random_seed = instructions.random_seed)
     return json.dumps(metrics)
 
 def coder_exists(coder_id: str) -> bool:

@@ -2,6 +2,7 @@ import json
 import os
 import time
 import uuid
+from functools import cmp_to_key
 
 from fastapi import HTTPException
 from pydantic import StrictStr, StrictInt
@@ -107,8 +108,8 @@ def job_failed(job: Job, redis: Redis, errorClass, error: Exception, trace):
 def action(task_id: str, action: TaskAction) -> Task:
     task = get(task_id)
     if action == "commit":
-        if get_status(task) != 'start':
-            raise HTTPException(status_code = 400, detail = 'Task already running!')
+        if get_status(task) in [TaskEventType.START, TaskEventType.COMMIT]:
+            raise HTTPException(status_code = 400, detail = f'Can not commit task (status is {get_status(task).value})!')
         task.events.append(TaskEvent(
             status = StrictStr('commit'),
             timestamp = StrictInt(time.time())
@@ -161,8 +162,12 @@ def create(create_task: TaskSeed) -> Task:
     store(task)
     return task
 
-def get_status(task: Task) -> StrictStr:
-    task.events.sort(key=lambda event: event.timestamp, reverse=True)
+def get_status(task: Task) -> TaskEventType | None:
+    def compare(e1: TaskEvent, e2: TaskEvent) -> 0 | 1 | -1:
+        if e1.timestamp != e2.timestamp:
+            return 1 if e1.timestamp > e2.timestamp else -1
+        return 1 if list(TaskEventType).index(e1.status) > list(TaskEventType).index(e2.status) else -1
+    task.events.sort(key = cmp_to_key(compare), reverse = True)
     return task.events[0].status
 
 def store(task: Task) -> None:

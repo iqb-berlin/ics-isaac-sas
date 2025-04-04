@@ -8,6 +8,7 @@ from models.task_instructions import TaskInstructions
 from worker.ics_worker import train, code
 
 
+
 class IssacSaS(unittest.TestCase):
     def test_train_and_predict(self):
         warnings.simplefilter('error')
@@ -15,6 +16,7 @@ class IssacSaS(unittest.TestCase):
         instructions_train = TaskInstructions(
             itemPrompt = 'insert a number!',
             itemTargets = ['one', 'two', 'three'],
+            randomSeed = 8
         )
 
         data = [

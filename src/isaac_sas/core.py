@@ -5,7 +5,7 @@ import shutil
 from builtins import str, list, max, Exception, print, zip, open
 
 import time
-from typing import Literal
+from typing import Literal, Final
 
 import numpy as np
 import onnxruntime as rt
@@ -25,11 +25,15 @@ from sklearn.model_selection import StratifiedKFold
 
 from isaac_sas.functions import remove_suffix
 from isaac_sas.models import LanguageDataRequest, PredictFromLanguageDataResponse, SinglePrediction
-from worker.common import print_in_worker
 
 inf_sessions = {} # Inference session object for predictions.
 features = {} # in-memory feature data
 bow_models = {}
+
+defaultLabels : Final = [
+    "False",
+    "True"
+]
 
 def get_data_path(datadir: Literal['onnx_models', 'bow_models', 'model_metrics'], file_name: str = '') -> str:
     path_from_env = os.environ.get('IS_DATA_DIR')
@@ -72,7 +76,7 @@ def prepare() -> None:
 def fetch_stored_models() -> list[str]:
     return list(inf_sessions.keys())
 
-def train_from_answers(req: LanguageDataRequest):
+def train_from_answers(req: LanguageDataRequest, random_seed: int | None = 2):
     model_id = req.modelId
     # All feature extractor objects that should be used, are defined here.
     ft_extractors = [SIMGroupExtractor()]
@@ -91,7 +95,9 @@ def train_from_answers(req: LanguageDataRequest):
 
     n_splits = (10 if data_frame.shape[0] > 1000 else 5) if data_frame.shape[0] > 50 else 2
 
-    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=2)
+    print('RAND:' + str(random_seed) if random_seed is not None else 'FIXX')
+
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state = random_seed)
     for train_ids, test_ids in skf.split(data_frame, labels):
 
         # The right indices must be found to extract the BOW features for the correct instances.
@@ -111,17 +117,18 @@ def train_from_answers(req: LanguageDataRequest):
         x_test = x.iloc[test_ids]
         y_test = labels.iloc[test_ids]
 
+        y_train_label_count = len(y_train.groupby('labels').nunique().values.tolist())
+        y_test_label_count = len(y_test.groupby('labels').nunique().values.tolist())
+
+        if y_train_label_count != len(defaultLabels) or y_test_label_count != len(defaultLabels):
+            continue
+
         y_train_raveled = np.ravel(y_train)
-
         clf.fit(x_train, y_train_raveled)
-
-
         y_pred = clf.predict(x_test)
 
         end = time.time()
 
-        print_in_worker(y_test)
-        print_in_worker(y_pred)
         # Problem: random selected sample may contain pny true or false!
         metrics = classification_report(
             y_test, y_pred, output_dict=True, target_names=["False", "True"] # TODO allow more categories
@@ -159,6 +166,9 @@ def train_from_answers(req: LanguageDataRequest):
             best_model = clf
             model_columns = list(x.columns)
             num_features = clf.n_features_in_
+
+    if best_model is None:
+        raise Exception("Could not create a model (dataset too small?)")
 
     # Write best results metrics to file
     file_name = get_data_path('model_metrics', model_id + ".json")
