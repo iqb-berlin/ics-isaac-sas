@@ -10,5 +10,5 @@ class Response(BaseModel):
     subform: Optional[StrictStr] = Field(default=None, description="If variables i. e. data source ids are not unique in the unit, 'subform' can specify the sub object related to the specific variable.")
     code: Optional[StrictInt] = Field(default=None, description="Code representing the category of the value after coding process.")
     score: Optional[StrictInt] = Field(default=None, description="This value represents the result evaluation of the code after coding process.")
-    codingProbabilities: Optional[Dict[StrictStr, float]] = Field(default=None, description="This value represents probabilities of given codes after coding process.")
+    coding_probabilities: Optional[Dict[StrictStr, float]] = Field(default=None, description="This value represents probabilities of given codes after coding process.", alias="codingProbabilities")
 

@@ -75,6 +75,7 @@ def code(model_id: str, input_data: List[Response]) -> List[Response]:
     )
 
     result = core.predict_from_answers(ldr)
+    print(result)
 
     output: List[Response] = []
     for row in response_rows:
@@ -86,6 +87,8 @@ def code(model_id: str, input_data: List[Response]) -> List[Response]:
             response.code = None
             response.score = None
         output.append(response)
+
+    print(output)
     return output
 
 

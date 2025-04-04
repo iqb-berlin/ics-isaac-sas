@@ -185,7 +185,7 @@ def store_data(chunk_type: ChunkType, data: List[Response]) -> DataChunk:
         type = chunk_type,
         id = StrictStr(uuid.uuid4()),
     )
-    data_as_json = json.dumps(data)
+    data_as_json = json.dumps(list(map(lambda row: row.model_dump(), data)))
     redis_store.set('data:' + chunk.type + ':' + chunk.id, data_as_json)
     return chunk
 
@@ -214,8 +214,9 @@ def get_data(task_id: str, chunk_id: str) -> list[Response]:
     chunk_content_str = redis_store.get('data:' + chunk_info.type + ':' + chunk_info.id)
     if not chunk_content_str:
         raise HTTPException(status_code=404, detail="Chunk Content not found!")
+    print(chunk_content_str)
     chunk_content_json = json.loads(chunk_content_str)
-    chunk_content = list(map(lambda row: Response.model_validate(row), chunk_content_json))
+    chunk_content = list(map(lambda row: Response.model_validate(row, by_alias = False, by_name = True), chunk_content_json))
     return chunk_content
 
 def delete(task_id: str) -> None:

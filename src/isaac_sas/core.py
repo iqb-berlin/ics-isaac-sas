@@ -25,10 +25,11 @@ from sklearn.model_selection import StratifiedKFold
 
 from isaac_sas.functions import remove_suffix
 from isaac_sas.models import LanguageDataRequest, PredictFromLanguageDataResponse, SinglePrediction
+from models.coder import Coder
 
-inf_sessions = {} # Inference session object for predictions.
-features = {} # in-memory feature data
-bow_models = {}
+inf_sessions = {} # Inference session object for predictions. # TODO get rid of this (or move to redis)
+features = {} # in-memory feature data # TODO get rid of this (or move to redis)
+bow_models = {} # TODO get rid of this (or move to redis)
 
 defaultLabels : Final = [
     "False",
@@ -43,8 +44,8 @@ def get_data_path(datadir: Literal['onnx_models', 'bow_models', 'model_metrics']
         raise Exception("Datadir " + path_from_env + " does not exist")
     return os.path.join(path_from_env, datadir, file_name)
 
-def prepare() -> None:
 
+def prepare() -> None:
     # Store all model objects and inference session objects in memory for
     # quick access.
     for model_file in os.listdir(get_data_path('onnx_models')):
@@ -52,9 +53,7 @@ def prepare() -> None:
             continue
         model_id = remove_suffix(model_file, ".onnx")
         if model_id not in inf_sessions:
-            inf_sessions[model_id] = rt.InferenceSession(
-                get_data_path('onnx_models', model_file)
-            )
+            inf_sessions[model_id] = load_onnx_model(model_id)
 
     # For prediction from ShortAnswerInstances the BOW model belonging to the ML model
     # must be loaded for feature extraction.
@@ -64,17 +63,35 @@ def prepare() -> None:
             continue
         model_id = remove_suffix(bow_file, ".json")
         if model_id not in bow_models:
-            bow_path = get_data_path('bow_models', bow_file)
-            with open(bow_path) as bowf:
-                state_dict = json.load(bowf)
-                # Instances list is passed empty here because bag of words setup has
-                # already been done.
-                bow_models[model_id] = BOWGroupExtractor([])
-                bow_models[model_id].bag = state_dict["bag"]
+            bow_models[model_id] = load_bow_model(model_id)
 
+def load_bow_model(model_id: str) -> BOWGroupExtractor :
+    bow_path = get_data_path('bow_models', model_id + ".json")
+    if not os.path.exists(bow_path):
+        raise Exception(f"Bow model not found: {model_id}")
+    with open(bow_path) as bowf:
+        state_dict = json.load(bowf)
+        # Instances list is passed empty here because bag of words setup has
+        # already been done.
+        model = BOWGroupExtractor([])
+        model.bag = state_dict["bag"]
+        return model
+
+def load_onnx_model(model_id: str) -> rt.InferenceSession:
+    onnx_path = get_data_path('onnx_models', model_id + ".onnx")
+    if not os.path.exists(onnx_path):
+        raise Exception(f"ONNX model not found: {model_id}")
+    return rt.InferenceSession(
+        get_data_path('onnx_models', onnx_path)
+    )
 
 def fetch_stored_models() -> list[str]:
-    return list(inf_sessions.keys())
+    models = []
+    for model_file in os.listdir(get_data_path('onnx_models')):
+        if model_file.startswith("."):
+            continue
+        models.append(model_file.removesuffix('.onnx'))
+    return models
 
 def train_from_answers(req: LanguageDataRequest, random_seed: int | None = 2):
     model_id = req.modelId
@@ -223,8 +240,7 @@ def store_as_onnx(model, model_id, model_columns, num_features):
     # Store an inference session for this model to be used during prediction.
     inf_sessions[model_id] = rt.InferenceSession(get_data_path('onnx_models', model_id + '.onnx'))
 
-def predict_from_answers(req: LanguageDataRequest) -> PredictFromLanguageDataResponse:
-    model_id = req.modelId
+def load_model(model_id: str) -> None:
     if model_id not in [remove_suffix(model, ".onnx") for model in os.listdir(get_data_path('onnx_models'))]:
         raise HTTPException(
             status_code=422,
@@ -241,23 +257,23 @@ def predict_from_answers(req: LanguageDataRequest) -> PredictFromLanguageDataRes
                    " instances (not with CAS).".format(model_id),
         )
 
-    bow_extractor = bow_models[model_id]
+def predict_from_answers(req: LanguageDataRequest) -> PredictFromLanguageDataResponse:
+    model_id = req.modelId
+
+    bow_extractor = load_bow_model(model_id)
+    onnx_inf_session = load_onnx_model(model_id)
     ft_extractors = [SIMGroupExtractor(), bow_extractor]
 
     predictions = []
-
     for instance in req.instances:
         data = pd.DataFrame()
         for ft_extractor in ft_extractors:
             data = pd.concat([data, ft_extractor.extract([instance])], axis=1)
-
-        predictions.append(do_prediction(data, model_id))
+        predictions.append(do_prediction(data, onnx_inf_session))
 
     return PredictFromLanguageDataResponse(predictions = predictions)
 
-def do_prediction(data: DataFrame, model_id: str = None) -> SinglePrediction:
-    session = inf_sessions[model_id]
-
+def do_prediction(data: DataFrame, session: rt.InferenceSession) -> SinglePrediction:
     query = pd.get_dummies(data)
     # The columns in string format are retrieved from the model and converted
     # back to a list.

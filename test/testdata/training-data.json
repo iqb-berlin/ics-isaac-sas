@@ -1,0 +1,30 @@
+[
+  {
+    "id": "var1",
+    "value": "four",
+    "status": "VALUE_CHANGED",
+    "setId": "p1",
+    "code": 1
+  },
+  {
+    "id": "var1",
+    "value": "three",
+    "status": "VALUE_CHANGED",
+    "setId": "p1",
+    "code": 0
+  },
+  {
+    "id": "var1",
+    "value": "Four",
+    "status": "VALUE_CHANGED",
+    "setId": "p1",
+    "code": 1
+  },
+  {
+    "id": "var1",
+    "value": "drei",
+    "status": "VALUE_CHANGED",
+    "setId": "p1",
+    "code": 0
+  }
+]
