@@ -29,7 +29,7 @@ from worker.common import print_in_worker
 redis_host = os.getenv('REDIS_HOST') or 'localhost'
 redis_queue = Redis(host=redis_host, port=6379, db=0)
 redis_store = StrictRedis(host=redis_host, port=6379, db=0, decode_responses=True)
-queue = Queue(connection=redis_queue)
+queue = Queue(connection=redis_queue, default_timeout=60*60)
 print("Redis Connected")
 
 def list_tasks() -> List[Task]:
@@ -82,7 +82,7 @@ def run_task(task: Task) -> None:
     else:
         print_in_worker(task.instructions)
         if  not type(task.instructions) is str:
-            raise Exception("Instructions has wrong type: " + type(task.instructions))
+            raise Exception("Instructions has wrong type: " + type(task.instructions).__name__)
         output = worker.code(task.instructions, input_data)
         chunk = store_data(ChunkType('output'), output)
         task.data.append(chunk)
@@ -95,7 +95,7 @@ def run_task(task: Task) -> None:
     ))
     store(task)
 
-def job_failed(job: Job, redis: Redis, errorClass, error: Exception, trace):
+def job_failed(job: Job, redis: Redis, error_class, error: Exception, trace):
     print_in_worker('job_failed')
     task = get(job.id)
     task.events.append(TaskEvent(
@@ -120,8 +120,7 @@ def action(task_id: str, action: TaskAction) -> Task:
             id = task_id,
             connection = redis_queue,
             kwargs = { "task": task },
-            on_failure = Callback(job_failed),
-            timeout = 5
+            on_failure = Callback(job_failed)
         )
         queue.enqueue_job(job)
 

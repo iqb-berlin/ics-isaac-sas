@@ -83,7 +83,7 @@ def code(model_id: str, input_data: List[Response]) -> List[Response]:
         if row.rowToCodeId is not None:
             class_probabilities = result.predictions[row.rowToCodeId].classProbabilities
             response.status = "CODING_SEMI_COMPLETE"
-            response.codingProbabilities = { label_to_code(k): v for k, v in class_probabilities.items() }
+            response.coding_probabilities = { label_to_code(k): v for k, v in class_probabilities.items() }
             response.code = None
             response.score = None
         output.append(response)
