@@ -1,5 +1,8 @@
-from typing import Dict, List, Any
+from typing import List
 from fastapi import APIRouter, Body, Path
+from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
+
 import controller.tasks
 from controller import info, tasks, coders
 from models.coder import Coder
@@ -168,9 +171,20 @@ async def tasks_task_id_data_chunk_id_get(
 )
 async def tasks_task_id_data_put(
     task_id: str = Path(..., description=""),
-    responses = Body(list[Response], description=""),
+    responses = Body(List[Response], description=""),
 ) -> DataChunk:
-    return tasks.add_data(task_id, responses)
+    # the automatic validation of List[Response] does not work, so we do it ourselves
+    validated_responses: List[Response] = []
+    for row in responses:
+        try:
+            response = Response.model_validate(row)
+        except ValidationError as e:
+            print(e.errors())
+            raise RequestValidationError(errors = e.errors())
+        validated_responses.append(response)
+    print(validated_responses[0])
+    print(type(validated_responses[0]))
+    return tasks.add_data(task_id, validated_responses)
 
 
 @router.delete(
