@@ -4,5 +4,29 @@
     "setId": "user1",
     "status": "VALUE_CHANGED",
     "value": "four"
+  },
+  {
+    "id": "var1",
+    "setId": "user2",
+    "status": "VALUE_CHANGED",
+    "value": "four"
+  },
+  {
+    "id": "var1",
+    "setId": "user3",
+    "status": "VALUE_CHANGED",
+    "value": "for"
+  },
+  {
+    "id": "var1",
+    "setId": "user4",
+    "status": "VALUE_CHANGED",
+    "value": "FOUR"
+  },
+  {
+    "id": "var1",
+    "setId": "user4",
+    "status": "VALUE_CHANGED",
+    "value": "Es kotzt mich an"
   }
 ]
