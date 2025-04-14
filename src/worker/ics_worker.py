@@ -1,11 +1,11 @@
-import json
+import json, re
 from typing import List
 
 from pydantic import StrictInt, BaseModel
 
 from features.data import ShortAnswerInstance
 from isaac_sas import core
-from isaac_sas.core import defaultLabels
+from isaac_sas.core import defaultLabels, model_exists
 from isaac_sas.models import LanguageDataRequest
 from models.response import Response
 from models.task_instructions import TaskInstructions
@@ -93,7 +93,7 @@ def code(model_id: str, input_data: List[Response]) -> List[Response]:
 
 
 
-def train(instructions: TaskInstructions, input_data: List[Response]) -> str:
+def train(task_label: str, instructions: TaskInstructions, input_data: List[Response]) -> str:
     def convert(response: Response) -> ShortAnswerInstance:
         return ShortAnswerInstance(
             taskId = 'test', # TODO
@@ -118,13 +118,17 @@ def train(instructions: TaskInstructions, input_data: List[Response]) -> str:
     mapped = list(map(convert, responses))
     print_in_worker(mapped)
 
+    model_id = re.sub(r'[^A-Za-z0-9 ]+', '', task_label)
+    while model_exists(model_id):
+        model_id = task_label + '_'
+
     ldr = LanguageDataRequest(
         instances = mapped,
-        modelId = 'test' # TODO
+        modelId = model_id
     )
 
     metrics = core.train_from_answers(ldr, random_seed = instructions.random_seed)
-    return json.dumps(metrics)
+    return f"Model trained: {model_id}.\n Metrics:\n" + json.dumps(metrics, indent = 2)
 
 def coder_exists(coder_id: str) -> bool:
     return core.model_exists(coder_id)

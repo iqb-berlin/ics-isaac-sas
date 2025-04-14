@@ -78,7 +78,7 @@ def run_task(task: Task) -> None:
     if task.type == 'train':
         if not isinstance(task.instructions, TaskInstructions):
             raise Exception("Instructions has wrong type: " + task.instructions.__class__.__name__)
-        message = worker.train(task.instructions, input_data)
+        message = worker.train(task.label, task.instructions, input_data)
     else:
         print_in_worker(task.instructions)
         if  not type(task.instructions) is str:
