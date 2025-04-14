@@ -181,9 +181,10 @@ async def tasks_task_id_data_put(
         except ValidationError as e:
             print(e.errors())
             raise RequestValidationError(errors = e.errors())
+        if response.value is None:
+            response.value = "" # is allowed by def. to avoid problems with response_model_exclude_none later, convert to ""
         validated_responses.append(response)
-    print(validated_responses[0])
-    print(type(validated_responses[0]))
+
     return tasks.add_data(task_id, validated_responses)
 
 

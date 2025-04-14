@@ -9,8 +9,6 @@ from isaac_sas.core import defaultLabels, model_exists
 from isaac_sas.models import LanguageDataRequest
 from models.response import Response
 from models.task_instructions import TaskInstructions
-from worker.common import print_in_worker
-
 
 class ResponseRow(BaseModel):
     response: Response
@@ -112,11 +110,9 @@ def train(task_label: str, instructions: TaskInstructions, input_data: List[Resp
 
     unique_codes = { obj.code for obj in responses }
     if len(unique_codes) != len(defaultLabels):
-        print_in_worker(unique_codes)
         raise Exception(f'Insufficient training data: {len(unique_codes)} are found, but it has to be exactly {len(defaultLabels)}.')
 
     mapped = list(map(convert, responses))
-    print_in_worker(mapped)
 
     model_id = re.sub(r'[^A-Za-z0-9 ]+', '', task_label)
     while model_exists(model_id):
