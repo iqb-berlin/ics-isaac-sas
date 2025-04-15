@@ -4,6 +4,7 @@ RUN mkdir /data
 RUN mkdir /data/bow_models
 RUN mkdir /data/model_metrics
 RUN mkdir /data/onnx_models
+RUN mkdir /data/instructions
 WORKDIR /app
 COPY requirements.txt requirements.txt
 RUN pip install --upgrade pip

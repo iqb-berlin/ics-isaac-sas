@@ -25,7 +25,7 @@ from sklearn.model_selection import StratifiedKFold
 
 from isaac_sas.functions import remove_suffix
 from isaac_sas.models import LanguageDataRequest, PredictFromLanguageDataResponse, SinglePrediction
-from models.coder import Coder
+
 
 inf_sessions = {} # Inference session object for predictions. # TODO get rid of this (or move to redis)
 features = {} # in-memory feature data # TODO get rid of this (or move to redis)
@@ -36,7 +36,7 @@ defaultLabels : Final = [
     "True"
 ]
 
-def get_data_path(datadir: Literal['onnx_models', 'bow_models', 'model_metrics'], file_name: str = '') -> str:
+def get_data_path(datadir: Literal['onnx_models', 'bow_models', 'model_metrics', 'instructions'], file_name: str = '') -> str:
     path_from_env = os.environ.get('IS_DATA_DIR')
     if not path_from_env:
         raise Exception("Env IS_DATA_DIR not set")
@@ -314,11 +314,15 @@ def wipe_models():
             detail="Could not remove and recreate the onnx_models directory",
         )
 
-def delete_model(model_id: str) -> None:
-    file_path = get_data_path('onnx_models', f"{model_id}.onnx")
+def delete_file(type: Literal['onnx_models', 'bow_models', 'model_metrics', 'instructions'], file_name: str = '') -> None:
+    file_path = get_data_path(type, file_name)
     os.remove(file_path)
 
+def delete_model(model_id: str) -> None:
+    delete_file('onnx_models', f"{model_id}.onnx")
+
+def file_exists(type: Literal['onnx_models', 'bow_models', 'model_metrics', 'instructions'], file_name: str) -> bool:
+    return os.path.exists(get_data_path(type, file_name))
 
 def model_exists(model_id: str) -> bool:
-    file_path = get_data_path('onnx_models', f"{model_id}.onnx")
-    return os.path.exists(file_path)
+    return file_exists('onnx_models', f"{model_id}.onnx")

@@ -53,14 +53,14 @@ def code_to_label(code: int) -> str:
         raise ValueError(f"Code {code} is not supported.")
     return defaultLabels[code]
 
-
 def code(model_id: str, input_data: List[Response]) -> List[Response]:
+    instructions = restore_instructions(model_id)
     def convert_to_sai(row: ResponseRow) -> ShortAnswerInstance:
         return ShortAnswerInstance(
             taskId = 'test',
             itemId = 'test',
-            itemPrompt = '',
-            itemTargets = [],
+            itemPrompt = instructions.item_prompt,
+            itemTargets = instructions.item_targets,
             learnerId = row.response.set_id,
             answer = row.response.value if isinstance(row.response.value, str) else '',
         )
@@ -73,7 +73,6 @@ def code(model_id: str, input_data: List[Response]) -> List[Response]:
     )
 
     result = core.predict_from_answers(ldr)
-    print(result)
 
     output: List[Response] = []
     for row in response_rows:
@@ -88,8 +87,6 @@ def code(model_id: str, input_data: List[Response]) -> List[Response]:
 
     print(output)
     return output
-
-
 
 def train(task_label: str, instructions: TaskInstructions, input_data: List[Response]) -> str:
     def convert(response: Response) -> ShortAnswerInstance:
@@ -114,9 +111,9 @@ def train(task_label: str, instructions: TaskInstructions, input_data: List[Resp
 
     mapped = list(map(convert, responses))
 
-    model_id = re.sub(r'[^A-Za-z0-9 ]+', '', task_label)
+    model_id = re.sub(r'[^A-Za-z0-9]', '-', task_label)
     while model_exists(model_id):
-        model_id = task_label + '_'
+        model_id = model_id + '_'
 
     ldr = LanguageDataRequest(
         instances = mapped,
@@ -124,10 +121,29 @@ def train(task_label: str, instructions: TaskInstructions, input_data: List[Resp
     )
 
     metrics = core.train_from_answers(ldr, random_seed = instructions.random_seed)
+
+    store_instructions(model_id, instructions)
+
     return f"Model trained: {model_id}.\n Metrics:\n" + json.dumps(metrics, indent = 2)
 
 def coder_exists(coder_id: str) -> bool:
-    return core.model_exists(coder_id)
+    return core.model_exists(coder_id) or core.file_exists('instructions', coder_id + '.json')
 
 def delete_coder(coder_id: str) -> None:
+    core.delete_file('instructions', coder_id + '.json')
     return core.delete_model(coder_id)
+
+# issac-sas actually uses the instructions not only in the training, but also in the coding process
+# so it must be part of the coder, as well es the mode, itself
+# we store it as file, because the instance of them stored in redis is bound to a task, not a coder
+# this might change later
+def store_instructions(coder_id: str, instructions: TaskInstructions):
+    path = core.get_data_path('instructions', coder_id + '.json')
+    with open(path, "w") as outfile:
+        outfile.write(instructions.model_dump_json(by_alias = True))
+        outfile.close()
+
+def restore_instructions(coder_id: str) -> TaskInstructions:
+    path = core.get_data_path('instructions', coder_id + '.json')
+    with open(path, "r") as infile:
+        return TaskInstructions.model_validate_json(infile.read())
