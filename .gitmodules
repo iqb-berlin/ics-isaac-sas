@@ -1,6 +1,9 @@
 [submodule "src/features"]
 	path = src/features
 	url = https://github.com/iqb-berlin/ics-isaac-feature-extraction.git
-[submodule "specs/coding-service"]
-	path = specs/coding-service
-	url = https://github.com/verona-interfaces/coding-service.git
+[submodule "lib/coding-service"]
+	path = lib/coding-service
+	url = https://github.com/iqb-specifications/coding-service.git
+[submodule "lib/ics-components"]
+	path = lib/ics-components
+	url = https://github.com/iqb-berlin/ics-components.git
