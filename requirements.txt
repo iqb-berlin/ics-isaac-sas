@@ -14,3 +14,5 @@ rq-dashboard==0.8.2.2
 # dev
 pytest==8.3.5
 httpx==0.28.1
+
+-e lib/ics_components/specs/coding-service/src/python/ics_models

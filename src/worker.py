@@ -3,9 +3,8 @@ import src.isaac_sas as isaac_sas
 from typing import List
 from pydantic import StrictInt, BaseModel
 from lib.feature_extraction.data import ShortAnswerInstance
-from src.models import LanguageDataRequest
-from lib.ics_components.src.models.response import Response
-from src.models import TaskInstructions
+from src.models import LanguageDataRequest, TaskInstructions
+from ics_models import Response
 
 class ResponseRow(BaseModel):
     response: Response

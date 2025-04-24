@@ -1,6 +1,6 @@
 import isaac_sas
 from fastapi import HTTPException
-from lib.ics_components.src.models.coder import Coder
+from ics_models import Coder
 
 
 def list() -> list[Coder]:
