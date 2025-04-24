@@ -2,10 +2,10 @@ import os
 import unittest
 import warnings
 
-from isaac_sas import core
+import isaac_sas
 from models.response import Response
 from models.task_instructions import TaskInstructions
-from worker.ics_worker import train, code
+from worker import train, code
 
 
 

@@ -1,4 +1,0 @@
-dkpro-cassis
-pydantic
-pandas
-textdistance[extras]

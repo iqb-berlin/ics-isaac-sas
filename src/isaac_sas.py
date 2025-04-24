@@ -12,8 +12,6 @@ import onnxruntime as rt
 import pandas as pd
 
 from fastapi import HTTPException
-from features.feature_groups import BOWGroupExtractor
-from features.feature_groups import SIMGroupExtractor
 from pandas.core.frame import DataFrame
 from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import FloatTensorType
@@ -23,14 +21,16 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import cohen_kappa_score
 from sklearn.model_selection import StratifiedKFold
 
-from isaac_sas.functions import remove_suffix
-from isaac_sas.models import LanguageDataRequest, PredictFromLanguageDataResponse, SinglePrediction
+from lib.feature_extraction.feature_groups import BOWGroupExtractor, SIMGroupExtractor
+from src.models import LanguageDataRequest, PredictFromLanguageDataResponse, SinglePrediction
 
 
+# TODO remove this cache and become stateless
 inf_sessions = {} # Inference session object for predictions. # TODO get rid of this (or move to redis)
 features = {} # in-memory feature data # TODO get rid of this (or move to redis)
 bow_models = {} # TODO get rid of this (or move to redis)
 
+# TODO handle this better
 defaultLabels : Final = [
     "False",
     "True"
@@ -45,25 +45,6 @@ def get_data_path(datadir: Literal['onnx_models', 'bow_models', 'model_metrics',
     return os.path.join(path_from_env, datadir, file_name)
 
 
-def prepare() -> None:
-    # Store all model objects and inference session objects in memory for
-    # quick access.
-    for model_file in os.listdir(get_data_path('onnx_models')):
-        if model_file.startswith("."):
-            continue
-        model_id = remove_suffix(model_file, ".onnx")
-        if model_id not in inf_sessions:
-            inf_sessions[model_id] = load_onnx_model(model_id)
-
-    # For prediction from ShortAnswerInstances the BOW model belonging to the ML model
-    # must be loaded for feature extraction.
-    for bow_file in os.listdir(get_data_path('bow_models')):
-        # Ignore hidden files like .keep
-        if bow_file.startswith("."):
-            continue
-        model_id = remove_suffix(bow_file, ".json")
-        if model_id not in bow_models:
-            bow_models[model_id] = load_bow_model(model_id)
 
 def load_bow_model(model_id: str) -> BOWGroupExtractor :
     bow_path = get_data_path('bow_models', model_id + ".json")
@@ -326,3 +307,31 @@ def file_exists(type: Literal['onnx_models', 'bow_models', 'model_metrics', 'ins
 
 def model_exists(model_id: str) -> bool:
     return file_exists('onnx_models', f"{model_id}.onnx")
+
+def remove_suffix(line: str, suffix: str) -> str:
+    if line.endswith(suffix):
+        return line[:-len(suffix):]
+    else:
+        return line
+
+
+# prepare cache TODO the remove cache and become stateless
+
+# Store all model objects and inference session objects in memory for
+# quick access.
+for model_file in os.listdir(get_data_path('onnx_models')):
+    if model_file.startswith("."):
+        continue
+    model_id = remove_suffix(model_file, ".onnx")
+    if model_id not in inf_sessions:
+        inf_sessions[model_id] = load_onnx_model(model_id)
+
+# For prediction from ShortAnswerInstances the BOW model belonging to the ML model
+# must be loaded for feature extraction.
+for bow_file in os.listdir(get_data_path('bow_models')):
+    # Ignore hidden files like .keep
+    if bow_file.startswith("."):
+        continue
+    model_id = remove_suffix(bow_file, ".json")
+    if model_id not in bow_models:
+        bow_models[model_id] = load_bow_model(model_id)

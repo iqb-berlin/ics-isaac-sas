@@ -7,12 +7,11 @@ docker compose up
 
 
 ## Development Setup
-We need the packages locally as well
 ```
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+git submodule update --init --recursive
 ```
+
+or: git pull --recurse-submodules
 
 # Old Docs
 

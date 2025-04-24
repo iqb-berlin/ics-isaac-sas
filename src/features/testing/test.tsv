@@ -1,7 +1,0 @@
-subTask,taskType,taskTopic,taskField,answerID,prompt,target,answer,correct,diagnosis,ID,answer.gec
-1B7b,FILL_IN_THE_BLANKS,LISTENING_COMPREHENSION,0,6,1. Gwynn tells Mrs Collins that Gillian needs,time,advice,0,m,1B7b_0_6,advice
-1B7b,FILL_IN_THE_BLANKS,LISTENING_COMPREHENSION,0,7,1. Gwynn tells Mrs Collins that Gillian needs,time,mone,0,m,1B7b_0_7,mone
-1B7b,FILL_IN_THE_BLANKS,LISTENING_COMPREHENSION,0,8,1. Gwynn tells Mrs Collins that Gillian needs,time,Time,1,c,1B7b_0_8,Time
-1B7b,FILL_IN_THE_BLANKS,LISTENING_COMPREHENSION,0,9,1. Gwynn tells Mrs Collins that Gillian needs,time,some advice,0,b,1B7b_0_9,Some advice
-1B7b,FILL_IN_THE_BLANKS,LISTENING_COMPREHENSION,0,10,1. Gwynn tells Mrs Collins that Gillian needs,time,help,0,b,1B7b_0_10,help
-1B7b,FILL_IN_THE_BLANKS,LISTENING_COMPREHENSION,0,11,1. Gwynn tells Mrs Collins that Gillian needs,time,money,0,b,1B7b_0_11,Money

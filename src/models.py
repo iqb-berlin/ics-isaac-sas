@@ -1,8 +1,9 @@
 from typing import Dict
 from typing import List
 from typing import Union
-from features.data import ShortAnswerInstance
 from pydantic import BaseModel
+
+from lib.feature_extraction.data import ShortAnswerInstance
 
 class LanguageDataRequest(BaseModel):
     """A request with language data, used for training and predicting."""

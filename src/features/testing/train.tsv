@@ -1,6 +1,0 @@
-subTask	taskType	taskTopic	taskField	answerID	prompt	target	answer	correct	diagnosis	ID	answer.gec
-1B7b	FILL_IN_THE_BLANKS	LISTENING_COMPREHENSION	0	0	1. Gwynn tells Mrs Collins that Gillian needs	time	To be fu	0	n	1B7b_0_0	To be fu
-1B7b	FILL_IN_THE_BLANKS	LISTENING_COMPREHENSION	0	1	1. Gwynn tells Mrs Collins that Gillian needs	time	Help	0	m	1B7b_0_1	Help
-1B7b	FILL_IN_THE_BLANKS	LISTENING_COMPREHENSION	0	2	1. Gwynn tells Mrs Collins that Gillian needs	time	some time	1	e	1B7b_0_2	some time .
-1B7b	FILL_IN_THE_BLANKS	LISTENING_COMPREHENSION	0	3	1. Gwynn tells Mrs Collins that Gillian needs	time	Talking	0	b	1B7b_0_3	Talking
-1B7b	FILL_IN_THE_BLANKS	LISTENING_COMPREHENSION	0	4	1. Gwynn tells Mrs Collins that Gillian needs	time	more	0	m	1B7b_0_4	more
