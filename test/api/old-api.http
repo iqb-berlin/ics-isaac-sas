@@ -1,6 +1,10 @@
 ### fetch IDs of currently stored SAS models
 GET {{server}}/fetchStoredModels
 
+> {%
+  client.assert(response.status === 200, "Response status is not 200");
+%}
+
 ### train a new model based on submitted answer data
 POST {{server}}/trainFromAnswers
 Content-Type: application/json
@@ -62,6 +66,12 @@ Content-Type: application/json
     }
   ]
 }
+
+> {%
+  client.assert(response.status === 200, "Response status is not 200");
+%}
+
+
 ### predict score of submitted answers
 POST {{server}}/predictFromAnswers
 Content-Type: application/json
@@ -79,7 +89,8 @@ Content-Type: application/json
         "three"
       ],
       "learnerId": "0",
-      "answer": "two"
+      "answer": "two",
+      "label": null
     },
     {
       "taskId": "1",
@@ -91,7 +102,8 @@ Content-Type: application/json
         "four"
       ],
       "learnerId": "1",
-      "answer": "two"
+      "answer": "two",
+      "label": null
     },
     {
       "taskId": "2",
@@ -103,11 +115,20 @@ Content-Type: application/json
         "six"
       ],
       "learnerId": "2",
-      "answer": "five"
+      "answer": "five",
+      "label": null
     }
   ]
 }
 
+> {%
+  client.assert(response.status === 200, "Response status is not 200");
+%}
+
 
 ### remove all models from service
-GET {{server}}/wipe\_models
+GET {{server}}/wipe_models
+
+> {%
+  client.assert(response.status === 200, "Response status is not 200");
+%}

@@ -3,8 +3,8 @@ import unittest
 import warnings
 
 import isaac_sas
-from models.response import Response
-from models.task_instructions import TaskInstructions
+from lib.ics_components.src.models.response import Response
+from lib.ics_components.src.models.task_instructions import TaskInstructions
 from worker import train, code
 
 
@@ -52,9 +52,9 @@ class IssacSaS(unittest.TestCase):
 
         result = train(instructions_train, data)
 
-        path_exists = os.path.exists(core.get_data_path('onnx_models', "test.onnx"))
-        bow_path_exists = os.path.exists(core.get_data_path('bow_models', "test.json"))
-        metrics_path_exists = os.path.exists(core.get_data_path("model_metrics", "test.json"))
+        path_exists = os.path.exists(isaac_sas.get_data_path('onnx_models', "test.onnx"))
+        bow_path_exists = os.path.exists(isaac_sas.get_data_path('bow_models', "test.json"))
+        metrics_path_exists = os.path.exists(isaac_sas.get_data_path("model_metrics", "test.json"))
 
         assert path_exists
         assert bow_path_exists
