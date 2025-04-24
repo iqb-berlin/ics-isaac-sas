@@ -5,7 +5,7 @@ from pydantic import StrictInt, BaseModel
 from lib.feature_extraction.data import ShortAnswerInstance
 from src.models import LanguageDataRequest
 from lib.ics_components.src.models.response import Response
-from lib.ics_components.src.models.task_instructions import TaskInstructions
+from src.models import TaskInstructions
 
 class ResponseRow(BaseModel):
     response: Response
