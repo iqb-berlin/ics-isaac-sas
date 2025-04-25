@@ -1,8 +1,8 @@
 # these are the endpoints provided in the original issac-sas implementation
 from fastapi import APIRouter
 
-import src.isaac_sas as isaac_sas
-from models import LanguageDataRequest, PredictFromLanguageDataResponse, ModelIdResponse
+import ics.isaac_sas as isaac_sas
+from ics.models import LanguageDataRequest, PredictFromLanguageDataResponse, ModelIdResponse
 
 router = APIRouter()
 

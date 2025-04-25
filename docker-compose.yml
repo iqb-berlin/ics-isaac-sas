@@ -15,7 +15,7 @@ services:
     build:
       dockerfile: worker.Dockerfile
     volumes:
-      - ./src:/app/src
+      - ./ics:/app/ics
       - ./lib:/app/lib
       - ics-is-data:/data
     command: rq worker -u redis://ics-is-redis:6379 default
@@ -32,10 +32,10 @@ services:
     build:
       dockerfile: backend.Dockerfile
     volumes:
-      - ./src:/app/src
+      - ./ics:/app/ics
       - ./lib:/app/lib
       - ics-is-data:/data
-    command: uvicorn lib.ics_components.src.main:app --port 9999 --reload --app-dir src --host 0.0.0.0
+    command: uvicorn ics_components.main:app --port 9999 --reload --app-dir src --host 0.0.0.0
     environment:
       REDIS_HOST: ics-is-redis
       IS_DATA_DIR: /data

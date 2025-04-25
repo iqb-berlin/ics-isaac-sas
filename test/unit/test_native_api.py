@@ -2,7 +2,6 @@ import json
 import os
 
 import pytest
-import isaac_sas
 
 from fastapi.testclient import TestClient
 from main import app

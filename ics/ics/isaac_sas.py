@@ -22,7 +22,7 @@ from sklearn.metrics import cohen_kappa_score
 from sklearn.model_selection import StratifiedKFold
 
 from lib.feature_extraction.feature_groups import BOWGroupExtractor, SIMGroupExtractor
-from src.models import LanguageDataRequest, PredictFromLanguageDataResponse, SinglePrediction
+from ics.models import LanguageDataRequest, PredictFromLanguageDataResponse, SinglePrediction
 
 
 # TODO remove this cache and become stateless

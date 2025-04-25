@@ -2,10 +2,10 @@ import os
 import unittest
 import warnings
 
-import isaac_sas
-from lib.ics_components.src.models.response import Response
-from lib.ics_components.src.models.task_instructions import TaskInstructions
-from worker import train, code
+from ics import isaac_sas
+from ics_components.ics_components.models.response import Response
+from ics_components.ics_components.models.task_instructions import TaskInstructions
+from ics.worker import train, code
 
 
 

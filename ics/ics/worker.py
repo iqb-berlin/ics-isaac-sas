@@ -1,11 +1,12 @@
 import json, re
-import src.isaac_sas as isaac_sas
+import ics.isaac_sas as isaac_sas
 from typing import List
 from pydantic import StrictInt, BaseModel
 
-from lib.ics_components.src.common import TrainingResult
+from ics_components.common.models import TrainingResult
 from lib.feature_extraction.data import ShortAnswerInstance
-from src.models import LanguageDataRequest, TaskInstructions
+from ics.models import LanguageDataRequest
+from ics.implementation import TaskInstructions
 from ics_models import Response
 
 class ResponseRow(BaseModel):

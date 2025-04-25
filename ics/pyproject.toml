@@ -1,0 +1,26 @@
+[project]
+name = "ics"
+version = "0.0.7"
+authors = [
+    { name="Philipp Franck", email="philipp.franck@hu-berlin.de" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.11"
+dependencies = [
+    "numpy==1.26.4",
+    "pandas==2.2.3",
+    "scikit-learn==1.6.1",
+    "dkpro-cassis==0.2.9",
+    "requests",
+    "skl2onnx==1.18.0",
+    "onnxruntime==1.21.0",
+    "textdistance==4.6.3",
+    "pydantic>=2",
+    "fastapi==0.115.12",
+    "redis==5.2.1",
+    "rq==2.1.0",
+    "rq-dashboard==0.8.2.2"
+]
+
+[project.urls]
+Homepage = "https://github.com/iqb-berlin/ics-isaac-sas"

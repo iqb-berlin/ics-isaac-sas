@@ -6,7 +6,7 @@ RUN mkdir /data/model_metrics
 RUN mkdir /data/onnx_models
 RUN mkdir /data/instructions
 
-COPY src /app/src
+COPY ics /app/ics
 COPY lib /app/lib
 
 WORKDIR /app
