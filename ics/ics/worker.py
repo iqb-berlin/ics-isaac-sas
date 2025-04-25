@@ -91,7 +91,7 @@ def train(task_label: str, instructions: TaskInstructions, input_data: List[Resp
         return ShortAnswerInstance(
             taskId = 'test', # TODO
             itemId = 'test', # TODO
-            itemPrompt = instructions.item_prompt,
+            itemPrompt = 'not used at all',
             itemTargets = instructions.item_targets,
             learnerId = response.set_id,
             answer = response.value if isinstance(response.value, str) else '',
