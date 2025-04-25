@@ -2,6 +2,8 @@ import json, re
 import src.isaac_sas as isaac_sas
 from typing import List
 from pydantic import StrictInt, BaseModel
+
+from lib.ics_components.src.common import TrainingResult
 from lib.feature_extraction.data import ShortAnswerInstance
 from src.models import LanguageDataRequest, TaskInstructions
 from ics_models import Response
@@ -76,16 +78,14 @@ def code(model_id: str, input_data: List[Response]) -> List[Response]:
         response = row.response
         if row.rowToCodeId is not None:
             class_probabilities = result.predictions[row.rowToCodeId].classProbabilities
-            response.status = "CODING_SEMI_COMPLETE"
-            response.coding_probabilities = { label_to_code(k): v for k, v in class_probabilities.items() }
+            response.status = "CODING_SEMI_COMPLETE" # TODO CODE_SELECTION_PENDING !
+            response.coding_probabilities = { label_to_code(k): v for k, v in class_probabilities.items() } # TODO probabilities!
             response.code = None
             response.score = None
         output.append(response)
-
-    print(output)
     return output
 
-def train(task_label: str, instructions: TaskInstructions, input_data: List[Response]) -> str:
+def train(task_label: str, instructions: TaskInstructions, input_data: List[Response]) -> TrainingResult:
     def convert(response: Response) -> ShortAnswerInstance:
         return ShortAnswerInstance(
             taskId = 'test', # TODO
@@ -121,7 +121,10 @@ def train(task_label: str, instructions: TaskInstructions, input_data: List[Resp
 
     store_instructions(model_id, instructions)
 
-    return f"Model trained: {model_id}.\n Metrics:\n" + json.dumps(metrics, indent = 2)
+    return TrainingResult(
+        msg = f"Model trained: {model_id}.\n Metrics:\n" + json.dumps(metrics, indent = 2),
+        coderId = model_id
+    )
 
 def coder_exists(coder_id: str) -> bool:
     return isaac_sas.model_exists(coder_id) or isaac_sas.file_exists('instructions', coder_id + '.json')
