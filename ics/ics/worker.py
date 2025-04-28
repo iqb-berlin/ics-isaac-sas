@@ -58,7 +58,7 @@ def code(model_id: str, input_data: List[Response]) -> List[Response]:
         return ShortAnswerInstance(
             taskId = 'test',
             itemId = 'test',
-            itemPrompt = instructions.item_prompt,
+            itemPrompt = 'not used at all',
             itemTargets = instructions.item_targets,
             learnerId = row.response.set_id,
             answer = row.response.value if isinstance(row.response.value, str) else '',
