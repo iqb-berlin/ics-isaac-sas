@@ -1,5 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="CS API" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" path="$PROJECT_DIR$/specs/coding-service/src/test/api.http">
-    <method v="2" />
-  </configuration>
-</component>

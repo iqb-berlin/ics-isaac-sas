@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Training" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" environment="dev" path="$PROJECT_DIR$/test/api/train.test.http" executionIdentifier="add Task">
+  <configuration default="false" name="Training" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" environment="dev" path="$PROJECT_DIR$/lib/ics_components/specs/coding-service/test/train.test.http" executionIdentifier="add Task">
     <method v="2" />
   </configuration>
 </component>
