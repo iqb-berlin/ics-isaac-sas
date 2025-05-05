@@ -1,0 +1,21 @@
+services:
+  ics-is-backend:
+    restart: always
+    networks:
+      - application-network
+    deploy:
+      mode: global
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ics-is-backend-oauth.entrypoints=websecure"
+      - "traefik.http.routers.ics-is-backend-oauth.tls=true"
+      - "traefik.http.routers.ics-is-backend-oauth.tls.certresolver=${TLS_CERTIFICATE_RESOLVER}"
+      - "traefik.http.routers.ics-is-backend-oauth.rule=Host(`api.${SERVER_NAME}`)"
+      - "traefik.http.routers.ics-is-backend-oauth.middlewares=security-headers"
+      - "traefik.docker.network=app-net"
+
+
+networks:
+  application-network:
+    name: app-net
+    external: true

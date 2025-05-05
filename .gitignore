@@ -21,3 +21,5 @@ data/onnx_models/*.onnx
 data/model_metrics/*.json
 
 gen
+
+.env.ics-is
