@@ -3,11 +3,12 @@ import ics.isaac_sas as isaac_sas
 from typing import List
 from pydantic import StrictInt, BaseModel
 
+from ics_components.common.helper import print_in_worker
 from ics_components.common.models import TrainingResult
 from lib.feature_extraction.data import ShortAnswerInstance
 from ics.models import LanguageDataRequest
 from ics.implementation import TaskInstructions
-from ics_models import Response
+from ics_models import Response, Code
 
 class ResponseRow(BaseModel):
     response: Response
@@ -76,11 +77,11 @@ def code(model_id: str, input_data: List[Response]) -> List[Response]:
 
     output: List[Response] = []
     for row in response_rows:
-        response = row.response
+        response : Response = row.response
         if row.rowToCodeId is not None:
             class_probabilities = result.predictions[row.rowToCodeId].classProbabilities
-            response.status = "CODING_SEMI_COMPLETE" # TODO CODE_SELECTION_PENDING !
-            response.coding_probabilities = { label_to_code(k): v for k, v in class_probabilities.items() } # TODO probabilities!
+            response.status = "CODE_SELECTION_PENDING"
+            response.codes = [Code(id = label_to_code(k), parameter = repr(v)) for k, v in class_probabilities.items()]
             response.code = None
             response.score = None
         output.append(response)
