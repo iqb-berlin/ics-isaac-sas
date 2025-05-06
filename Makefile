@@ -7,12 +7,11 @@ run-prod:
 down-prod:
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml down
 
-# Push all docker images to 'scm.cms.hu-berlin.de:4567/iqb/studio-lite'
+
+# Push all docker images to 'scm.cms.hu-berlin.de:4567/iqb-lab/ics'
 push-iqb-registry:
-	docker compose build
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.ics-is build
 	docker login scm.cms.hu-berlin.de:4567
-	docker push scm.cms.hu-berlin.de:4567/iqb/studio-lite/iqbberlin/studio-lite-db:$(TAG)
-	docker push scm.cms.hu-berlin.de:4567/iqb/studio-lite/iqbberlin/studio-lite-liquibase:$(TAG)
-	docker push scm.cms.hu-berlin.de:4567/iqb/studio-lite/iqbberlin/studio-lite-backend:$(TAG)
-	docker push scm.cms.hu-berlin.de:4567/iqb/studio-lite/iqbberlin/studio-lite-frontend:$(TAG)
+	docker push scm.cms.hu-berlin.de:4567/iqb-lab/ics/ics-is-backend:$(TAG)
+	docker push scm.cms.hu-berlin.de:4567/iqb-lab/ics/ics-is-worker:$(TAG)
 	docker logout

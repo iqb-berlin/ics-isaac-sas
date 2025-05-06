@@ -12,6 +12,7 @@ services:
       - 6379:6379
 
   ics-is-worker:
+    image: ${REGISTRY_PATH}ics-is-worker
     build:
       dockerfile: worker.Dockerfile
     volumes:
@@ -28,6 +29,7 @@ services:
       - ics-is-redis
 
   ics-is-backend:
+    image:  ${REGISTRY_PATH}ics-is-backend
     container_name: ics-is-backend
     build:
       dockerfile: backend.Dockerfile
