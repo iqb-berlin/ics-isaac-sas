@@ -48,6 +48,7 @@ services:
       - ics-is-redis
 
   ics-is-rq-dashboard:
+    image: ${REGISTRY_PATH}ics-is-worker
     container_name: ics-is-rq-dashboard
     build:
       dockerfile: worker.Dockerfile
