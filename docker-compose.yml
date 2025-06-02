@@ -30,8 +30,6 @@ services:
     build:
       dockerfile: backend.Dockerfile
     volumes:
-      - ./ics:/app/ics
-      - ./lib:/app/lib
       - ics-is-data:/data
     command: uvicorn ics_components.main:app --port 9999 --app-dir src --host 0.0.0.0
     environment:
