@@ -1,0 +1,27 @@
+services:
+  ics-is-redis:
+    ports:
+      - 6379:6379
+
+  ics-is-worker:
+    volumes:
+      - ./ics:/app/ics
+      - ./lib:/app/lib
+
+  ics-is-backend:
+    command: uvicorn ics_components.main:app --port 9999 --reload --app-dir src --host 0.0.0.0
+    ports:
+      - 9898:9898 # python debug server
+
+  ics-is-rq-dashboard:
+    image: ${REGISTRY_PATH}ics-is-worker
+    container_name: ics-is-rq-dashboard
+    build:
+      dockerfile: worker.Dockerfile
+    command: rq-dashboard --redis-url=redis://ics-is-redis:6379
+    ports:
+      - 9181:9181
+
+
+
+

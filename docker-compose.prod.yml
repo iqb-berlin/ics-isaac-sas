@@ -15,13 +15,26 @@ x-env-oauth2-proxy: &env-oauth2-proxy
 
 
 services:
-  ics-is-backend:
+  ics-is-redis:
     restart: always
     networks:
       - application-network
     deploy:
       mode: global
 
+  ics-is-worker:
+    restart: always
+    networks:
+      - application-network
+    deploy:
+      mode: global
+
+  ics-is-backend:
+    restart: always
+    networks:
+      - application-network
+    deploy:
+      mode: global
 
   ics-is-proxy:
     image: quay.io/oauth2-proxy/oauth2-proxy:v7.5.1

@@ -8,16 +8,12 @@ services:
       - "redis-server --maxmemory 1073741824 --maxmemory-policy volatile-lru"
     healthcheck:
       test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
-    ports:
-      - 6379:6379
 
   ics-is-worker:
     image: ${REGISTRY_PATH}ics-is-worker
     build:
       dockerfile: worker.Dockerfile
     volumes:
-      - ./ics:/app/ics
-      - ./lib:/app/lib
       - ics-is-data:/data
     command: rq worker -u redis://ics-is-redis:6379 default
     environment:
@@ -37,26 +33,14 @@ services:
       - ./ics:/app/ics
       - ./lib:/app/lib
       - ics-is-data:/data
-    command: uvicorn ics_components.main:app --port 9999 --reload --app-dir src --host 0.0.0.0
+    command: uvicorn ics_components.main:app --port 9999 --app-dir src --host 0.0.0.0
     environment:
       REDIS_HOST: ics-is-redis
       IS_DATA_DIR: /data
     ports:
       - 9999:9999
-#      - 9898:9898 # python debug server
     depends_on:
       - ics-is-redis
-
-  ics-is-rq-dashboard:
-    image: ${REGISTRY_PATH}ics-is-worker
-    container_name: ics-is-rq-dashboard
-    build:
-      dockerfile: worker.Dockerfile
-    command: rq-dashboard --redis-url=redis://ics-is-redis:6379
-    ports:
-      - 9181:9181
-#    profiles:
-#      - dev
 
 volumes:
   ics-is-data:
