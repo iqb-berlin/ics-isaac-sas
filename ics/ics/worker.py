@@ -82,7 +82,7 @@ def code(model_id: str, input_data: List[Response]) -> List[Response]:
             class_probabilities = result.predictions[row.rowToCodeId].classProbabilities
             response.status = "CODE_SELECTION_PENDING"
             response.codes = [Code(id = label_to_code(k), parameter = repr(v)) for k, v in class_probabilities.items()]
-            response.code = None
+            # response.code = None
             response.score = None
         output.append(response)
     return output
