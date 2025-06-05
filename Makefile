@@ -31,6 +31,9 @@ build-prod:
 push-iqb-registry:
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.ics-is build
 	docker login scm.cms.hu-berlin.de:4567
-	source .env.ics-is && docker push $(REGISTRY_PATH)ics-is-backend:$(TAG)
-	source .env.ics-is && docker push $(REGISTRY_PATH)ics-is-worker:$(TAG)
+	bash -c 'source .env.ics-is && docker push $${REGISTRY_PATH}ics-is-backend:$${TAG}'
+	bash -c 'source .env.ics-is && docker push $${REGISTRY_PATH}ics-is-worker:$${TAG}'
 	docker logout
+
+fehler:
+	bash -c 'source .env.ics-is && echo $${REGISTRY_PATH}xx$${TAG}mm  '
