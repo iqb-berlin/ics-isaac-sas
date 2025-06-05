@@ -35,6 +35,12 @@ services:
       - application-network
     deploy:
       mode: global
+    environment:
+      CORS_ALLOW_ORIGINS: http://localhost:43817
+    command: uvicorn ics_components.main:app --port 9999 --reload --app-dir src --host 0.0.0.0
+    volumes:
+      - ./ics:/app/ics
+      - ./lib:/app/lib
 
   ics-is-proxy:
     image: quay.io/oauth2-proxy/oauth2-proxy:v7.5.1
@@ -44,7 +50,7 @@ services:
       - "traefik.http.routers.ics-is-backend-oauth.tls=true"
       - "traefik.http.routers.ics-is-backend-oauth.tls.certresolver=${TLS_CERTIFICATE_RESOLVER}"
       - "traefik.http.routers.ics-is-backend-oauth.rule=Host(`is.${SERVER_NAME}`)"
-      - "traefik.http.routers.ics-is-backend-oauth.middlewares=security-headers"
+#      - "traefik.http.routers.ics-is-backend-oauth.middlewares=security-headers"
       - "traefik.docker.network=app-net"
     environment:
       <<: *env-oauth2-proxy

@@ -5,7 +5,10 @@ up:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
 down:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+
+build:
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml build $(SERVICE)
 
 logs:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f $(SERVICE)
@@ -21,6 +24,9 @@ down-prod:
 
 logs-prod:
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.ics-is logs
+
+build-prod:
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml build $(SERVICE)
 
 # Push all docker images to 'scm.cms.hu-berlin.de:4567/iqb-lab/ics'
 include .env.ics-is
