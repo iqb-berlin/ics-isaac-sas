@@ -1,6 +1,6 @@
 import json, re
 import ics.isaac_sas as isaac_sas
-from typing import List
+from typing import List, Callable
 from pydantic import StrictInt, BaseModel
 
 from ics_components.common.helper import print_in_worker
@@ -53,7 +53,11 @@ def code_to_label(code: int) -> str:
         raise ValueError(f"Code {code} is not supported.")
     return isaac_sas.defaultLabels[code]
 
-def code(model_id: str, input_data: List[Response]) -> List[Response]:
+def code(
+    model_id: str,
+    input_data: List[Response],
+    status_callback: Callable[[str, bool], None] | None
+) -> List[Response]:
     instructions = restore_instructions(model_id)
     def convert_to_sai(row: ResponseRow) -> ShortAnswerInstance:
         return ShortAnswerInstance(
@@ -73,7 +77,7 @@ def code(model_id: str, input_data: List[Response]) -> List[Response]:
         modelId = model_id
     )
 
-    result = isaac_sas.predict_from_answers(ldr)
+    result = isaac_sas.predict_from_answers(ldr, status_callback)
 
     output: List[Response] = []
     for row in response_rows:
@@ -87,7 +91,12 @@ def code(model_id: str, input_data: List[Response]) -> List[Response]:
         output.append(response)
     return output
 
-def train(task_label: str, instructions: TaskInstructions, input_data: List[Response]) -> TrainingResult:
+def train(
+    task_label: str,
+    instructions: TaskInstructions,
+    input_data: List[Response],
+    status_callback: Callable[[str, bool], None] | None
+) -> TrainingResult:
     def convert(response: Response) -> ShortAnswerInstance:
         return ShortAnswerInstance(
             taskId = 'test', # TODO
@@ -119,7 +128,7 @@ def train(task_label: str, instructions: TaskInstructions, input_data: List[Resp
         modelId = model_id
     )
 
-    metrics = isaac_sas.train_from_answers(ldr, random_seed = instructions.random_seed)
+    metrics = isaac_sas.train_from_answers(ldr, instructions.random_seed, status_callback)
 
     store_instructions(model_id, instructions)
 

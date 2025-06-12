@@ -5,7 +5,7 @@ import shutil
 from builtins import str, list, max, Exception, print, zip, open
 
 import time
-from typing import Literal, Final
+from typing import Literal, Final, Callable
 
 import numpy as np
 import onnxruntime as rt
@@ -44,8 +44,6 @@ def get_data_path(datadir: Literal['onnx_models', 'bow_models', 'model_metrics',
         raise Exception("Datadir " + path_from_env + " does not exist")
     return os.path.join(path_from_env, datadir, file_name)
 
-
-
 def load_bow_model(model_id: str) -> BOWGroupExtractor :
     bow_path = get_data_path('bow_models', model_id + ".json")
     if not os.path.exists(bow_path):
@@ -74,7 +72,11 @@ def fetch_stored_models() -> list[str]:
         models.append(model_file.removesuffix('.onnx'))
     return models
 
-def train_from_answers(req: LanguageDataRequest, random_seed: int | None = 2):
+def train_from_answers(
+    req: LanguageDataRequest,
+    random_seed: int | None = 2,
+    message_callback: Callable[[str, bool], None] | None = None
+):
     model_id = req.modelId
     # All feature extractor objects that should be used, are defined here.
     ft_extractors = [SIMGroupExtractor()]
@@ -93,10 +95,13 @@ def train_from_answers(req: LanguageDataRequest, random_seed: int | None = 2):
 
     n_splits = (10 if data_frame.shape[0] > 1000 else 5) if data_frame.shape[0] > 50 else 2
 
-    print('RAND:' + str(random_seed) if random_seed is not None else 'FIXX')
+    if random_seed:
+        message_callback('No real randomizer used', True)
 
     skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state = random_seed)
+    split_nr = 0
     for train_ids, test_ids in skf.split(data_frame, labels):
+        split_nr += 1
 
         # The right indices must be found to extract the BOW features for the correct instances.
         train_instances = [req.instances[idx] for idx in train_ids]
@@ -164,6 +169,9 @@ def train_from_answers(req: LanguageDataRequest, random_seed: int | None = 2):
             best_model = clf
             model_columns = list(x.columns)
             num_features = clf.n_features_in_
+
+        if message_callback:
+            message_callback(f'{split_nr}/{n_splits}', False)
 
     if best_model is None:
         raise Exception("Could not create a model (dataset too small?)")
@@ -238,12 +246,17 @@ def load_model(model_id: str) -> None:
                    " instances (not with CAS).".format(model_id),
         )
 
-def predict_from_answers(req: LanguageDataRequest) -> PredictFromLanguageDataResponse:
+def predict_from_answers(
+    req: LanguageDataRequest,
+    message_callback: Callable[[str, bool], None] | None
+) -> PredictFromLanguageDataResponse:
     model_id = req.modelId
 
     bow_extractor = load_bow_model(model_id)
     onnx_inf_session = load_onnx_model(model_id)
     ft_extractors = [SIMGroupExtractor(), bow_extractor]
+
+    report_steps = 20 - 2 * len(str(abs(len(req.instances))))
 
     predictions = []
     for instance in req.instances:
@@ -251,6 +264,9 @@ def predict_from_answers(req: LanguageDataRequest) -> PredictFromLanguageDataRes
         for ft_extractor in ft_extractors:
             data = pd.concat([data, ft_extractor.extract([instance])], axis=1)
         predictions.append(do_prediction(data, onnx_inf_session))
+
+        if message_callback and (len(predictions) % report_steps == 0):
+            message_callback(f'{len(predictions)}/{len(req.instances)}', False)
 
     return PredictFromLanguageDataResponse(predictions = predictions)
 
